@@ -1,0 +1,281 @@
+* Технічне завдання
+** Загальний опис проекту
+. [Цей проект](https://github.com/MichaelKazarian/WordDictUtils) призначено для створення словників для проекта [WordDolphin](https://play.google.com/store/apps/details?id=com.waverunner.wordrunner).
+Основа проекту мій інший проект, [WordDictCore](https://github.com/MichaelKazarian/WordDictCore) який презентує відкритий формат для зберігання слів для додатку WordDoplhin.
+Словники будуть створюватись через утіліти командного рядка. ось pom.xml Для WordDictUtils. Залежить від
+
+**  Призначення проекту
+Проект WordDictUtils — це набір утиліти командного рядка, призначених для:
+
+Генерації словників у форматі .wdi (відкритий формат WordDictCore)
+Конвертації даних з зовнішніх джерел (Wiktionary, CSV, JSON тощо) у формат WordDolphin
+Валідації та перевірки цілісності словників
+Оптимізації та стиснення словників
+Підтримки багатомовних словників (EN→UK, UK→EN, тощо)
+
+Словники, створені за допомогою цих утиліт, використовуються у мобільному додатку WordDolphin.
+
+** Послідовність виконання
+
+*** TODO Створити основний клас для формування json-файлу використовуючи пакет WordDictCore
+У нас є файл з англійськими словами, транскрипцією, видом слова, перекладами та прикладами, наприклад:
+#+BEGIN_SRC
+* A
+| <l4>| <l6>|
+| *ability* [əˈbɪlɪti] (n) здатність; уміння         | He has the ability to solve complex problems. (Він має здатність вирішувати складні проблеми.) |
+| *able* [ˈeɪbəl] (adj) здатний; спроможний          | She is able to speak four languages. (Вона здатна говорити чотирма мовами.)           |
+| *about* [əˈbaʊt] (prep/adv) про; близько           | They talked about the project. (Вони говорили про проект.) The meeting is about to start. (Зустріч ось-ось почнеться.) |
+| *above* [əˈbʌv] (prep/adv) над; вище               | The bird is flying above the treetops. (Птах летить над верхівками дерев.) She ranked above her peers. (Вона була вище за своїх однолітків.) |
+#+END_SRC
+Потрібно вибрати визначення слів, тобто відкинути
+#+BEGIN_SRC
+ * A
+| <l4>| <l6>|
+#+END_SRC
+і додати їх у вказаний каталог
+** Технічні деталі
+*** Залежності
+#+BEGIN_SRC
+com.github.MichaelKazarian:WordDictCore
+org.json:json
+junit:junit
+#+END_SRC
+
+*** Структура проекту
+Наразі, після ініціалізації, вона така:
+#+BEGIN_SRC
+ $ tree
+ .
+ ├── LICENSE
+ ├── Makefile
+ ├── pom.xml
+ ├── README.md
+ ├── src
+ │   ├── main
+ │   │   ├── java
+ │   │   │   └── com
+ │   │   │       └── worddict
+ │   │   │           └── worddictutils
+ │   │   │               └── WordDictUtils.java
+ │   │   └── resources
+ │   └── test
+ │       ├── java
+ │       │   └── com
+ │       │       └── worddict
+ │       │           └── worddictutils
+ │       │               └── WordDictUtilsTest.java
+ │       └── resources
+ └── target
+     ├── classes
+     ├── generated-sources
+     │   └── annotations
+     ├── generated-test-sources
+     │   └── test-annotations
+     ├── maven-archiver
+     │   └── pom.properties
+     ├── maven-status
+     │   └── maven-compiler-plugin
+     │       ├── compile
+     │       │   └── default-compile
+     │       │       ├── createdFiles.lst
+     │       │       └── inputFiles.lst
+     │       └── testCompile
+     │           └── default-testCompile
+     │               ├── createdFiles.lst
+     │               └── inputFiles.lst
+     ├── test-classes
+     └── WordDictUtils-1.0.0.jar
+#+END_SRC
+
+*** pom.xml
+#+BEGIN_SRC xml
+ <project xmlns="http://maven.apache.org/POM/4.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                              https://maven.apache.org/xsd/maven-4.0.0.xsd">
+     <modelVersion>4.0.0</modelVersion>
+
+     <!-- Project Coordinates (Updated for WordDictUtils) -->
+     <groupId>com.github.MichaelKazarian</groupId>
+     <artifactId>WordDictUtils</artifactId>
+     <version>1.0.0</version>
+     <packaging>jar</packaging>
+
+     <name>WordDictUtils</name>
+     <description>WordDictUtils is a collection of essential utilities for the manipulation of word and dictionaries data using the open WordDolphin format.</description>
+     <url>https://github.com/MichaelKazarian/WordDictUtils</url>
+
+     <!-- License Information (Inherited) -->
+     <licenses>
+         <license>
+             <name>The Apache License, Version 2.0</name>
+             <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+         </license>
+     </licenses>
+
+     <!-- Developer Information (Inherited) -->
+     <developers>
+         <developer>
+             <id>michaelkazarian</id>
+             <name>о. Михайло Казарян</name>
+             <url>https://github.com/MichaelKazarian</url>
+         </developer>
+     </developers>
+
+     <properties>
+         <maven.compiler.source>1.8</maven.compiler.source>
+         <maven.compiler.target>1.8</maven.compiler.target>
+         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+     </properties>
+
+     <!-- Dependencies -->
+     <dependencies>
+
+         <!-- 1. Dependency on WordDictCore (from JitPack) -->
+         <dependency>
+             <groupId>com.github.MichaelKazarian</groupId>
+             <artifactId>WordDictCore</artifactId>
+             <version>1.0.0</version>
+         </dependency>
+
+         <!-- 2. JSON parsing (Inherited) -->
+         <dependency>
+             <groupId>org.json</groupId>
+             <artifactId>json</artifactId>
+             <version>20250517</version>
+         </dependency>
+
+         <!-- 3. JUnit tests (Inherited) -->
+         <dependency>
+             <groupId>junit</groupId>
+             <artifactId>junit</artifactId>
+             <version>4.13.2</version>
+             <scope>test</scope>
+         </dependency>
+     </dependencies>
+
+     <!-- Repositories needed to resolve JitPack dependencies -->
+     <repositories>
+         <repository>
+             <id>jitpack.io</id>
+             <url>https://jitpack.io</url>
+         </repository>
+     </repositories>
+
+     <build>
+         <plugins>
+             <!-- Java compilation -->
+             <plugin>
+                 <groupId>org.apache.maven.plugins</groupId>
+                 <artifactId>maven-compiler-plugin</artifactId>
+                 <version>3.13.0</version>
+                 <configuration>
+                     <source>${maven.compiler.source}</source>
+                     <target>${maven.compiler.target}</target>
+                 </configuration>
+             </plugin>
+
+             <!-- JAR manifest -->
+             <plugin>
+                 <groupId>org.apache.maven.plugins</groupId>
+                 <artifactId>maven-jar-plugin</artifactId>
+                 <version>3.3.0</version>
+                 <configuration>
+                     <archive>
+                         <manifest>
+                             <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                             <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                         </manifest>
+                     </archive>
+                 </configuration>
+             </plugin>
+
+             <!-- Plugin to run main classes (used by 'make run' target in Makefile) -->
+             <plugin>
+                 <groupId>org.codehaus.mojo</groupId>
+                 <artifactId>exec-maven-plugin</artifactId>
+                 <version>3.2.0</version>
+                 <executions>
+                     <execution>
+                         <goals>
+                             <goal>java</goal>
+                         </goals>
+                     </execution>
+                 </executions>
+             </plugin>
+         </plugins>
+     </build>
+ </project>
+#+END_SRC
+
+*** Makefile для маніпуляції проектом
+#+BEGIN_SRC makefile
+ # =====================================================
+ #  WordDictCore — Makefile wrapper for Maven
+ # =====================================================
+
+ APP_NAME = WordDictCore
+ VERSION = 1.0.0-gpl
+ JAR_FILE = target/$(APP_NAME)-$(VERSION).jar
+
+ # ------------------------
+ # Default target
+ # ------------------------
+ .PHONY: help
+ help:
+	 @echo ""
+	 @echo "=== $(APP_NAME) Build Commands ==="
+	 @echo " make build       — Build the JAR package"
+	 @echo " make test        — Run all tests"
+	 @echo " make clean       — Clean build artifacts"
+	 @echo " make install     — Install to local Maven repository (~/.m2)"
+	 @echo " make deploy      — Deploy to GitHub Packages (if configured)"
+	 @echo " make run MAIN=<class> — Run a specific main class"
+	 @echo " make all         — Clean, build, test, and package"
+	 @echo ""
+
+ # ------------------------
+ # Build, Test, Clean
+ # ------------------------
+
+ build:
+	 mvn clean package -DskipTests=false
+
+ test:
+	 mvn test
+
+ clean:
+	 mvn clean
+
+ # ------------------------
+ # Install / Deploy
+ # ------------------------
+
+ install:
+	 mvn install
+
+ deploy:
+	 mvn deploy
+
+ # ------------------------
+ # Run (with main class)
+ # ------------------------
+
+ run:
+	 @if [ -z "$(MAIN)" ]; then \
+	   echo "Please specify MAIN class, e.g.:"; \
+	   echo " make run MAIN=com.worddict.wiktionarybot.WiktionaryEnglish"; \
+	 else \
+	   mvn exec:java -Dexec.mainClass=$(MAIN); \
+	 fi
+
+ # ------------------------
+ # Utility targets
+ # ------------------------
+
+ jar:
+	 @echo "Built JAR file: $(JAR_FILE)"
+
+ all: clean build test jar
+#+END_SRC
+
