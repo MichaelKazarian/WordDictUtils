@@ -76,24 +76,6 @@
 
   <build>
     <plugins>
-      <!-- Picocli compilation and runtime settings -->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.13.0</version>
-        <configuration>
-          <source>${maven.compiler.source}</source>
-          <target>${maven.compiler.target}</target>
-          <annotationProcessorPaths>
-            <path>
-              <groupId>info.picocli</groupId>
-              <artifactId>picocli</artifactId>
-              <version>4.7.6</version>
-            </path>
-          </annotationProcessorPaths>
-        </configuration>
-      </plugin>
-
       <!-- Create a single JAR with dependencies and main class -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
