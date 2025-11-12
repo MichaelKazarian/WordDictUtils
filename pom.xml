@@ -14,7 +14,6 @@
   <description>WordDictUtils is a collection of essential utilities for the manipulation of word and dictionaries data using the open WordDolphin format.</description>
   <url>https://github.com/MichaelKazarian/WordDictUtils</url>
 
-  <!-- License Information (Inherited) -->
   <licenses>
     <license>
       <name>The Apache License, Version 2.0</name>
@@ -22,11 +21,10 @@
     </license>
   </licenses>
 
-  <!-- Developer Information (Inherited) -->
   <developers>
     <developer>
       <id>michaelkazarian</id>
-      <name>о. Михайло Казарян</name>
+      <name>Michael Kazarian</name>
       <url>https://github.com/MichaelKazarian</url>
     </developer>
   </developers>
@@ -37,9 +35,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
-  <!-- Dependencies -->
   <dependencies>
-
     <!-- 1. Dependency on WordDictCore (from JitPack) -->
     <dependency>
       <groupId>com.github.MichaelKazarian</groupId>
@@ -62,6 +58,7 @@
       <scope>test</scope>
     </dependency>
 
+    <!-- 4. Picocli annotation processor for CLI metadata -->
     <dependency>
       <groupId>info.picocli</groupId>
       <artifactId>picocli</artifactId>
@@ -79,7 +76,7 @@
 
   <build>
     <plugins>
-      <!-- Java compilation -->
+      <!-- Picocli compilation and runtime settings -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
@@ -87,31 +84,6 @@
         <configuration>
           <source>${maven.compiler.source}</source>
           <target>${maven.compiler.target}</target>
-        </configuration>
-      </plugin>
-
-      <!-- Plugin to run main classes (used by 'make run' target in Makefile) -->
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>exec-maven-plugin</artifactId>
-        <version>3.2.0</version>
-        <executions>
-          <execution>
-            <goals>
-              <goal>java</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.13.0</version>
-        <configuration>
-          <source>${maven.compiler.source}</source>
-          <target>${maven.compiler.target}</target>
-          <!-- Picocli annotation processor -->
           <annotationProcessorPaths>
             <path>
               <groupId>info.picocli</groupId>
@@ -122,6 +94,7 @@
         </configuration>
       </plugin>
 
+      <!-- Create a single JAR with dependencies and main class -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-assembly-plugin</artifactId>

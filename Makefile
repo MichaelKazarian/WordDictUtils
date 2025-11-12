@@ -17,7 +17,7 @@ help:
 
 build:
 	@mvn -q clean package -DskipTests=false
-	@echo "✅ Built $(JAR_FILE)"
+	@echo "Built $(JAR_FILE)"
 
 run: $(JAR_FILE)
 	@java -jar $(JAR_FILE)
