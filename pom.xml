@@ -2,116 +2,153 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
                              https://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+  <modelVersion>4.0.0</modelVersion>
 
-    <!-- Project Coordinates (Updated for WordDictUtils) -->
-    <groupId>com.github.MichaelKazarian</groupId>
-    <artifactId>WordDictUtils</artifactId>
-    <version>1.0.0</version>
-    <packaging>jar</packaging>
+  <!-- Project Coordinates (Updated for WordDictUtils) -->
+  <groupId>com.github.MichaelKazarian</groupId>
+  <artifactId>WordDictUtils</artifactId>
+  <version>1.0.0</version>
+  <packaging>jar</packaging>
 
-    <name>WordDictUtils</name>
-    <description>WordDictUtils is a collection of essential utilities for the manipulation of word and dictionaries data using the open WordDolphin format.</description>
-    <url>https://github.com/MichaelKazarian/WordDictUtils</url>
+  <name>WordDictUtils</name>
+  <description>WordDictUtils is a collection of essential utilities for the manipulation of word and dictionaries data using the open WordDolphin format.</description>
+  <url>https://github.com/MichaelKazarian/WordDictUtils</url>
 
-    <!-- License Information (Inherited) -->
-    <licenses>
-        <license>
-            <name>The Apache License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-        </license>
-    </licenses>
+  <!-- License Information (Inherited) -->
+  <licenses>
+    <license>
+      <name>The Apache License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+    </license>
+  </licenses>
 
-    <!-- Developer Information (Inherited) -->
-    <developers>
-        <developer>
-            <id>michaelkazarian</id>
-            <name>о. Михайло Казарян</name>
-            <url>https://github.com/MichaelKazarian</url>
-        </developer>
-    </developers>
+  <!-- Developer Information (Inherited) -->
+  <developers>
+    <developer>
+      <id>michaelkazarian</id>
+      <name>о. Михайло Казарян</name>
+      <url>https://github.com/MichaelKazarian</url>
+    </developer>
+  </developers>
 
-    <properties>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
+  <properties>
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
 
-    <!-- Dependencies -->
-    <dependencies>
+  <!-- Dependencies -->
+  <dependencies>
 
-        <!-- 1. Dependency on WordDictCore (from JitPack) -->
-        <dependency>
-            <groupId>com.github.MichaelKazarian</groupId>
-            <artifactId>WordDictCore</artifactId>
-            <version>1.0.0</version>
-        </dependency>
+    <!-- 1. Dependency on WordDictCore (from JitPack) -->
+    <dependency>
+      <groupId>com.github.MichaelKazarian</groupId>
+      <artifactId>WordDictCore</artifactId>
+      <version>1.0.0</version>
+    </dependency>
 
-        <!-- 2. JSON parsing (Inherited) -->
-        <dependency>
-            <groupId>org.json</groupId>
-            <artifactId>json</artifactId>
-            <version>20250517</version>
-        </dependency>
+    <!-- 2. JSON parsing (Inherited) -->
+    <dependency>
+      <groupId>org.json</groupId>
+      <artifactId>json</artifactId>
+      <version>20250517</version>
+    </dependency>
 
-        <!-- 3. JUnit tests (Inherited) -->
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.13.2</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
+    <!-- 3. JUnit tests (Inherited) -->
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.13.2</version>
+      <scope>test</scope>
+    </dependency>
 
-    <!-- Repositories needed to resolve JitPack dependencies -->
-    <repositories>
-        <repository>
-            <id>jitpack.io</id>
-            <url>https://jitpack.io</url>
-        </repository>
-    </repositories>
+    <dependency>
+      <groupId>info.picocli</groupId>
+      <artifactId>picocli</artifactId>
+      <version>4.7.6</version>
+    </dependency>
+  </dependencies>
 
-    <build>
-        <plugins>
-            <!-- Java compilation -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.13.0</version>
-                <configuration>
-                    <source>${maven.compiler.source}</source>
-                    <target>${maven.compiler.target}</target>
-                </configuration>
-            </plugin>
+  <!-- Repositories needed to resolve JitPack dependencies -->
+  <repositories>
+    <repository>
+      <id>jitpack.io</id>
+      <url>https://jitpack.io</url>
+    </repository>
+  </repositories>
 
-            <!-- JAR manifest -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>3.3.0</version>
-                <configuration>
-                    <archive>
-                        <manifest>
-                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
-                        </manifest>
-                    </archive>
-                </configuration>
-            </plugin>
+  <build>
+    <plugins>
+      <!-- Java compilation -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.13.0</version>
+        <configuration>
+          <source>${maven.compiler.source}</source>
+          <target>${maven.compiler.target}</target>
+        </configuration>
+      </plugin>
 
-            <!-- Plugin to run main classes (used by 'make run' target in Makefile) -->
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>3.2.0</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>java</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
+      <!-- Plugin to run main classes (used by 'make run' target in Makefile) -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>3.2.0</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>java</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.13.0</version>
+        <configuration>
+          <source>${maven.compiler.source}</source>
+          <target>${maven.compiler.target}</target>
+          <!-- Picocli annotation processor -->
+          <annotationProcessorPaths>
+            <path>
+              <groupId>info.picocli</groupId>
+              <artifactId>picocli</artifactId>
+              <version>4.7.6</version>
+            </path>
+          </annotationProcessorPaths>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <version>3.6.0</version>
+        <configuration>
+          <finalName>${project.artifactId}-${project.version}</finalName>
+          <appendAssemblyId>false</appendAssemblyId>
+          <archive>
+            <manifest>
+              <mainClass>com.worddict.worddictutils.WordDictUtils</mainClass>
+            </manifest>
+          </archive>
+          <descriptorRefs>
+            <descriptorRef>jar-with-dependencies</descriptorRef>
+          </descriptorRefs>
+        </configuration>
+        <executions>
+          <execution>
+            <id>make-assembly</id>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+    </plugins>
+  </build>
 </project>

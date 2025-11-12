@@ -2,68 +2,31 @@
 #  WordDictUtils — Makefile wrapper for Maven
 # =====================================================
 
-# --- Project Configuration ---
-# Update these constants for the new project
-APP_NAME = WordDictUtils
-VERSION = 1.0.0-gpl
-JAR_FILE = target/$(APP_NAME)-$(VERSION).jar
+APP_NAME  := WordDictUtils
+VERSION   := 1.0.0
+JAR_FILE  := target/$(APP_NAME)-$(VERSION).jar
 
-# ------------------------
-# Default target
-# ------------------------
 .PHONY: help
 help:
-	@echo ""
-	@echo "=== $(APP_NAME) Build Commands ==="
-	@echo " make build	 — Build the JAR package"
-	@echo " make test	 — Run all tests"
-	@echo " make clean	 — Clean build artifacts"
-	@echo " make install	 — Install to local Maven repository (~/.m2)"
-	@echo " make deploy	 — Deploy to GitHub Packages (if configured)"
-	@echo " make run MAIN=<class> — Run a specific main class (requires exec plugin in pom.xml)"
-	@echo " make all	 — Clean, build, test, and package"
-	@echo ""
-
-# ------------------------
-# Build, Test, Clean
-# ------------------------
+	@echo "=== $(APP_NAME) Commands ==="
+	@echo " make build        — Build fat JAR with dependencies"
+	@echo " make run          — Run main class from the JAR"
+	@echo " make import-org   — Run import-org task"
+	@echo " make test         — Run tests"
+	@echo " make clean        — Clean build artifacts"
 
 build:
-	mvn clean package -DskipTests=false
+	@mvn -q clean package -DskipTests=false
+	@echo "✅ Built $(JAR_FILE)"
+
+run: $(JAR_FILE)
+	@java -jar $(JAR_FILE)
+
+import-org: $(JAR_FILE)
+	@java -jar $(JAR_FILE) import-org $(INPUT) $(OUTPUT)
 
 test:
-	mvn test
+	@mvn -q test
 
 clean:
-	mvn clean
-
-# ------------------------
-# Install / Deploy
-# ------------------------
-
-install:
-	mvn install
-
-deploy:
-	mvn deploy
-
-# ------------------------
-# Run (with main class)
-# ------------------------
-
-run:
-	@if [ -z "$(MAIN)" ]; then \
-		echo "Please specify MAIN class, e.g.:"; \
-		echo " make run MAIN=com.worddict.worddictutils.ExampleRunner"; \
-	else \
-		mvn exec:java -Dexec.mainClass=$(MAIN); \
-	fi
-
-# ------------------------
-# Utility targets
-# ------------------------
-
-jar:
-	@echo "Built JAR file: $(JAR_FILE)"
-
-all: clean build test jar
+	@mvn -q clean
