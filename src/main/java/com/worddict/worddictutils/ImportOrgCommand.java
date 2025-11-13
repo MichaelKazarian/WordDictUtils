@@ -35,20 +35,8 @@ public class ImportOrgCommand implements Runnable {
 
     @Override
     public void run() {
-        Path input = Paths.get(inputPath);
-        Path output = Paths.get(outputDir);
-
-        if (!Files.isRegularFile(input)) {
-            System.err.println("Помилка: Файл не знайдено — " + input);
-            return;
-        }
-
-        try {
-            Files.createDirectories(output);
-        } catch (IOException e) {
-            System.err.println("Не вдалося створити папку: " + output);
-            return;
-        }
+        Path input = validateInput();
+        Path output = prepareOutput();
 
         int totalWords = 0;
         int totalTranslations = 0;
@@ -120,6 +108,24 @@ public class ImportOrgCommand implements Runnable {
 
         } catch (IOException e) {
             System.err.println("Пом(li)ка I/O: " + e.getMessage());
+        }
+    }
+
+    private Path validateInput() {
+        Path input = Paths.get(inputPath);
+        if (!Files.isRegularFile(input)) {
+            throw new IllegalArgumentException("Файл не знайдено: " + input);
+        }
+        return input;
+    }
+
+    private Path prepareOutput() {
+        Path output = Paths.get(outputDir);
+        try {
+            Files.createDirectories(output);
+            return output;
+        } catch (IOException e) {
+            throw new RuntimeException("Не вдалося створити папку: " + output, e);
         }
     }
 }
