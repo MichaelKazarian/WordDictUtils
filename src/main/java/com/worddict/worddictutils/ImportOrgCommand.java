@@ -13,6 +13,7 @@ import java.util.regex.Pattern;
 
 import com.worddict.worddictcore.Word;
 import com.worddict.worddictcore.Translation;
+import com.worddict.worddictcore.Pronounce;
 import org.json.JSONObject;
 
 @Command(
@@ -67,7 +68,11 @@ public class ImportOrgCommand implements Runnable {
                 String enPart = m.group(5).trim();       // "The bird... She ranked..."
 
                 Word w = new Word(word);
-
+                Pronounce p = new Pronounce();
+                Pronounce.TextPronounce tp0 = new Pronounce.TextPronounce(transcription);
+                p.addTextPronounce(tp0);
+                w.setPronounce(p);
+                w.setNote("(POS: "+pos+")");
                 // Розбиваємо переклади
                 String[] ukrTranslations = ukrPart.split("\\s*;\\s*");
                 String[] examples = enPart.split("\\)\\s+(?=[A-Z\"'A-Za-z])");
