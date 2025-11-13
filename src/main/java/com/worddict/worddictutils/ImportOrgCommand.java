@@ -180,7 +180,7 @@ public class ImportOrgCommand implements Runnable {
     
         for (int i = 0; i < entry.translations.length; i++) {
             String t = entry.translations[i].trim();
-            if (target.isEmpty()) continue;
+            if (t.isEmpty()) continue;
         
             Translation tr = new Translation(t);
             addSampleIfPresent(tr, entry.examples, i);
