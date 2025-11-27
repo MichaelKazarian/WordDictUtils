@@ -2,6 +2,9 @@
 #  WordDictUtils — Makefile wrapper for Maven
 # =====================================================
 
+# Disable "Entering directory" messages
+MAKEFLAGS += --no-print-directory
+
 APP_NAME  := WordDictUtils
 VERSION   := 1.0.0
 JAR_FILE  := target/$(APP_NAME)-$(VERSION).jar
