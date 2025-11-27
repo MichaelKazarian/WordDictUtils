@@ -17,7 +17,7 @@
 
 ** Послідовність виконання
 
-*** TODO Створити основний клас для формування json-файлу використовуючи пакет WordDictCore
+*** DONE Створити основний клас для формування json-файлу використовуючи пакет WordDictCore
 У нас є файл з англійськими словами, транскрипцією, видом слова, перекладами та прикладами, наприклад:
 #+BEGIN_SRC
 * A
@@ -33,6 +33,77 @@
 | <l4>| <l6>|
 #+END_SRC
 і додати їх у вказаний каталог
+
+** Створення RestApi для доступа
+*** Модель словника
+Клас Dictionary представляє один словник для конкретної мовної пари:
+вихідна мова (source) → цільова мова (target).
+Наприклад, англійсько-український словник містить англійські слова з українськими перекладами.
+Усі операції зі словами нечутливі до регістру.
+*** Менеджер словників
+**** Загальна концепція
+Необхідний верхній рівень управління словниками (файлова система, БД тощо).
+Цей рівень дозволяє працювати з кількома вихідними (базовими) мовами одночасно.
+Для кожної базової мови можна мати багато словників у різні цільові мови, включно з кількома іменованими словниками на одну й ту саму пару.
+**** Структура каталогів (файлова реалізація)
+#+BEGIN_SRC
+dictionaries/                           ← глобальний корінь
+├── en/                                 ← baseLanguage = "en"
+│   ├── uk/                             ← стандартний словник en→uk (без власної назви)
+│   │   ├── description.json
+│   │   ├── words/
+│   │   └── sounds/
+│   ├── uk_MyMinimal/                   ← іменований словник en→uk
+│   ├── uk_Personal2025/
+│   ├── fr/
+│   ├── fr_Business_Vocabulary/
+└──es/                                  ← baseLanguage = "es"
+    ├── en/
+    └── de/
+#+END_SRC
+Правила іменування словників у межах однієї baseLanguage:
+якщо назва не вказана → папка = код цільової мови (uk, de, fr …)
+якщо назва вказана → папка = {targetCode}_{dictionaryName} (uk_Minimal, fr_Business_Vocabulary тощо)
+Унікальність словника визначається кінцевою назвою папки всередині папки baseLanguage.
+**** Опис словника – description.json
+#+BEGIN_SRC json
+{
+  "WORDS_COUNT": 2584,
+  "RAW_SPACE": 34207563,
+  "TARGET_LANGUAGE": "uk",
+  "TIMESTAMP": "20251112_154237",
+  "USERS_LANGUAGES": ["uk"],
+  "DESCRIPTION": "English lexical minimum for Ukrainian users",
+  "DICTIONARY_NAME": "MyMinimal"
+}
+#+END_SRC
+**** Структура каталогів відображається так:
+Структура каталогів в коді віжображається так:
+DictionaryManager          ← глобальний, один на всю програму
+    └── List<BaseLanguage>  ← кожна — одна вихідна мова (en, es, uk…)
+            └── List<Dictionary> ← словники en→uk, en→de, en→uk_MyDict тощо
+**** Класи, які вже задіяні в поточній архітектурі менеджеру словників
+
+com.worddict.worddictcore.Language 
+ — опис мови (код ISO-639-1, назва англійською, локальна назва, рейтинг)
+com.worddict.worddictutils.Dictionary
+ — Базовий (abstract) клас одного конкретного словника.
+ - Представляє одну мовну пару source → target.
+ - Відповідає за операції зі словами, аудіо, статистикою
+com.worddict.worddictutils.BaseLanguage
+   - Абстрактний клас представляє одну базову мову — наприклад, англійську
+   - Керує всіма словниками, що мають цю мову як source
+   - Методи: createDictionary(…), listDictionaries(), removeDictionary(…)
+com.worddict.worddictutils.DictionaryManager
+   - Глобальний менеджер — один екземпляр на всю програму (Singleton)
+   - Тримає список усіх BaseLanguage (en, es, uk, de…)
+   - Єдина точка входу для доступу до будь-якого словника
+   - Методи: addBaseLanguage(), getBaseLanguages(), getBaseLanguage(code)
+
+**** Класи, яких ще немає (плануються)
+  - FileSystemBaseLanguage extends BaseLanguage
+  - FileSystemDictionary    extends Dictionary
+
 ** Технічні деталі
 *** Залежності
 #+BEGIN_SRC
