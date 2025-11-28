@@ -13,7 +13,9 @@ ROOT := $(shell \
     done; \
 )
 
-.PHONY: build test clean
+# Delegate targets to the root Makefile
+
+.PHONY: build test clean import-org create-dict
 
 build:
 	@make -C $(ROOT) build
@@ -23,3 +25,14 @@ test:
 
 clean:
 	@make -C $(ROOT) clean
+
+
+import-org:
+	@make -C $(ROOT) import-org INPUT="$(INPUT)" OUTPUT="$(OUTPUT)"
+
+create-dict:
+	@make -C $(ROOT) create-dict DICTDIR="$(DICTDIR)" SRC="$(SRC)" DST="$(DST)"
+
+create-dict-args:
+	@make -C $(ROOT) create-dict-args ARGS="$(ARGS)"
+

@@ -15,6 +15,7 @@ help:
 	@echo " make build        — Build fat JAR with dependencies"
 	@echo " make run          — Run main class from the JAR"
 	@echo " make import-org   — Run import-org task"
+	@echo " make create-dict  — Run create-dict task"
 	@echo " make test         — Run tests"
 	@echo " make clean        — Clean build artifacts"
 
@@ -27,6 +28,18 @@ run: $(JAR_FILE)
 
 import-org: $(JAR_FILE)
 	@java -jar $(JAR_FILE) import-org $(INPUT) $(OUTPUT)
+
+#make create-dict DICTDIR=my-dict SRC=en TARGET=es
+create-dict: $(JAR_FILE)
+	@java -jar $(JAR_FILE) create-dict $(DICTDIR) $(SRC) $(TARGET)
+
+# create-dict-args: $(JAR_FILE)
+# 	@java -jar $(JAR_FILE) create-dict dictdir en uk -n "Test name"
+
+# make create-dict-args ARGS="dict-path en es -n 'test name'"
+create-dict-args: $(JAR_FILE)
+	@java -jar $(JAR_FILE) create-dict $(ARGS)
+
 
 test:
 	@mvn -q test
