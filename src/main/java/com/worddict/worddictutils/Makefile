@@ -31,7 +31,7 @@ import-org:
 	@make -C $(ROOT) import-org INPUT="$(INPUT)" OUTPUT="$(OUTPUT)"
 
 create-dict:
-	@make -C $(ROOT) create-dict DICTDIR="$(DICTDIR)" SRC="$(SRC)" DST="$(DST)"
+	@make -C $(ROOT) create-dict DICTDIR="$(DICTDIR)" SRC="$(SRC)" TARGET="$(TARGET)"
 
 create-dict-args:
 	@make -C $(ROOT) create-dict-args ARGS="$(ARGS)"
