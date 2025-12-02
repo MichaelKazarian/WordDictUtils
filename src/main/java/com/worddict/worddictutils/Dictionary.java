@@ -3,7 +3,6 @@ package com.worddict.worddictutils;
 import com.worddict.worddictcore.Language;
 import com.worddict.worddictcore.Word;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -60,7 +59,7 @@ public class Dictionary {
 
     /** Finds words by prefix (default: empty list). */
     public List<Word> findWords(String prefix) {
-        return Collections.emptyList();
+        return List.of();
     }
 
     /** Returns total word count (default: 0). */

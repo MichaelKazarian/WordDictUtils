@@ -46,7 +46,7 @@ public class CommandCreateDictionary implements Runnable {
 
             // DictionaryManagerFileSystem manager =
             //         new DictionaryManagerFileSystem(rootDir);
-            DictionaryManagerFileSystem manager = DictionaryManagerFileSystem.getInstance();
+            DictionaryManagerFileSystem manager = DictionaryManagerFileSystem.INSTANCE;;
 
             //BaseLanguage base = manager.getBaseLanguage(source);
             BaseLanguage base = new MockBaseLanguage(source);
@@ -64,7 +64,11 @@ public class CommandCreateDictionary implements Runnable {
                                base.getDictionaryName(targetLangCode, dictName));
 
         } catch (Exception e) {
-            System.err.println("Error creating dictionary: " + e.getMessage());
+            if (e instanceof IllegalArgumentException iae) {
+                // Тепер iae доступна без явного приведення!
+            } else {
+                System.err.println("Fatal error: " + e.getMessage());
+            }
         }
     }
 }
