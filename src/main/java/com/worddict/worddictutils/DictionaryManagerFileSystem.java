@@ -93,17 +93,13 @@ public enum DictionaryManagerFileSystem implements DictionaryManager {
     }
 
     @Override
-    public void addBaseLanguage(BaseLanguage baseLanguage) {
-        if (baseLanguage == null || baseLanguage.getLanguage().getLanguageCode() == null) {
+    public void addBaseLanguage(BaseLanguage baseLang) {
+        if (baseLang == null || baseLang.getLanguage().getLanguageCode() == null) {
             throw new IllegalArgumentException("BaseLanguage or its code cannot be null");
         }
-        String langCode = baseLanguage.getLanguage().getLanguageCode().toLowerCase(Locale.ROOT);
+        String langCode = baseLang.getLanguage().getLanguageCode().toLowerCase(Locale.ROOT);
 
-        // Перевіряємо, чи вже завантажена мова під час ініціалізації
-        if (languages.containsKey(langCode)) {
-            System.out.println("Warning: Language " + langCode + " already loaded. Skipped.");
-            return;
-        }
+        if (handleDuplicateLanguage(langCode)) return;
         
         try {
             setupLanguageDirectory(langCode);
@@ -111,7 +107,21 @@ public enum DictionaryManagerFileSystem implements DictionaryManager {
             throw new RuntimeException("Failed to create directory for language: " + langCode, e);
         }
 
-        languages.put(langCode, baseLanguage);
+        languages.put(langCode, baseLang);
+    }
+
+    /**
+     * Checks if a language with the given code is already registered.
+     * If it is, prints a warning and returns true, indicating the caller should skip processing.
+     * * @param languageCode The lowercased ISO code of the language (e.g., "en").
+     * @return true if the language is already registered and was skipped, false otherwise.
+     */
+    private boolean handleDuplicateLanguage(String languageCode) {
+        if (languages.containsKey(languageCode)) {
+            System.out.println("Warning: Language " + languageCode + " already loaded. Skipped.");
+            return true;
+        }
+        return false;
     }
 
     /**
