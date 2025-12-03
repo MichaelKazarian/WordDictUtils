@@ -8,6 +8,8 @@ import com.worddict.worddictcore.Language;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Optional;
+import java.io.IOException;
 
 /**
  * Creates a new dictionary using DictionaryManagerFileSystem.
@@ -38,37 +40,40 @@ public class CommandCreateDictionary implements Runnable {
 
     @Override
     public void run() {
+        DictionaryManagerFileSystem manager = DictionaryManagerFileSystem.INSTANCE;
         try {
-            Path rootDir = Paths.get(rootDirString);
+            manager.init(rootDirString);
 
             Language source = Language.getLanguageByCode(sourceLangCode);
             Language target = Language.getLanguageByCode(targetLangCode);
 
-            // DictionaryManagerFileSystem manager =
-            //         new DictionaryManagerFileSystem(rootDir);
-            DictionaryManagerFileSystem manager = DictionaryManagerFileSystem.INSTANCE;;
+            manager.addBaseLanguage(new MockBaseLanguage(source));
+            Optional<BaseLanguage> baseOptional = manager.getBaseLanguage(sourceLangCode);
 
-            //BaseLanguage base = manager.getBaseLanguage(source);
-            BaseLanguage base = new MockBaseLanguage(source);
-
-            Dictionary dict;
-            if (dictName == null) {
-                dict = base.createDictionary(target);
-            } else {
-                dict = base.createDictionary(target, dictName);
+            if (baseOptional.isEmpty()) {
+                System.err.println("Error: BaseLanguage implementation for '" +
+                                   sourceLangCode + "' not registered.");
+                return;
             }
+            BaseLanguage base = baseOptional.get();
+
+            Dictionary dict = (dictName == null)
+                ? base.createDictionary(target)
+                : base.createDictionary(target, dictName);
 
             System.out.println("Created dictionary:");
-            System.out.print("  " + rootDirString + " → " );
+            System.out.print("  Path (Root): " + manager.getRootDirectory() + " → ");
             System.out.println("  name: " +
                                base.getDictionaryName(targetLangCode, dictName));
 
+        } catch (IllegalArgumentException iae) {
+            System.err.println("Input Error: " + iae.getMessage());
+        } catch (IllegalStateException ise) {
+            System.err.println("Manager Error: " + ise.getMessage());
+        } catch (IOException ioe) {
+            System.err.println("Filesystem Error: Could not initialize root directory: " + ioe.getMessage());
         } catch (Exception e) {
-            if (e instanceof IllegalArgumentException iae) {
-                // Тепер iae доступна без явного приведення!
-            } else {
-                System.err.println("Fatal error: " + e.getMessage());
-            }
+            System.err.println("An unexpected error occurred: " + e.getMessage());
         }
     }
 }

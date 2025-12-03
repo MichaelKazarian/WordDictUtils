@@ -46,7 +46,7 @@ public enum DictionaryManagerFileSystem implements DictionaryManager {
     private Path setupRootDirectory(String rootPathString) throws IOException {
         Path rootPath = Paths.get(rootPathString).toAbsolutePath();
 
-        if (Files.notExists(rootPath)) {
+        if (!Files.exists(rootPath)) {
             Files.createDirectories(rootPath);
         }
 
@@ -65,7 +65,31 @@ public enum DictionaryManagerFileSystem implements DictionaryManager {
         if (baseLanguage == null || baseLanguage.getLanguage().getLanguageCode() == null) {
             throw new IllegalArgumentException("BaseLanguage or its code cannot be null");
         }
-        languages.put(baseLanguage.getLanguage().getLanguageCode().toLowerCase(), baseLanguage);
+        String languageCode = baseLanguage.getLanguage().getLanguageCode().toLowerCase(Locale.ROOT);
+        try {
+            setupLanguageDirectory(languageCode);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to create directory for language: " + languageCode, e);
+        }
+
+        languages.put(languageCode, baseLanguage);
+    }
+
+    /**
+     * Creates the directory for the given language code within the manager's root directory.
+     * * <p>The method constructs the path and creates the directory only if it does not already exist.</p>
+     * * @param languageCode The standard language code (e.g., "en", "es").
+     * @throws IOException If the root directory is inaccessible or the language directory
+     * cannot be created.
+     */
+    private void setupLanguageDirectory(String languageCode) throws IOException {
+        Path rootPath = getRootDirectory();
+        Path langPath = rootPath.resolve(languageCode);
+
+        if (Files.notExists(langPath)) {
+            Files.createDirectories(langPath);
+            System.out.println("Created language directory: " + langPath);
+        }
     }
 
     @Override

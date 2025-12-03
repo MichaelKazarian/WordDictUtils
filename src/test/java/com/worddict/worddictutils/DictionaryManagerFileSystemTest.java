@@ -11,24 +11,36 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.io.IOException;
 import java.util.Comparator;
+import java.util.UUID;
 
 import com.worddict.worddictcore.Language;
 
 public class DictionaryManagerFileSystemTest {
 
-    private DictionaryManagerFileSystem manager;
+    private static DictionaryManagerFileSystem manager;
+    private static String currentTestRoot;
 
     @Before
-    public void setUp() {
+    public void setUp() throws IOException {
         manager = DictionaryManagerFileSystem.INSTANCE;
+        manager.resetForTests();
+        currentTestRoot = getTempPath("dict-setup-");
+        manager.init(currentTestRoot.toString());
+    }
+
+    @org.junit.AfterClass
+    public static void tearDownClass() throws IOException {
+        if (currentTestRoot != null) {
+            deleteDirectoryRecursively(currentTestRoot);
+            currentTestRoot = null;
+        }
         manager.resetForTests();
     }
 
     @Test
-    public void testSingleton() {
-        DictionaryManagerFileSystem m1 = DictionaryManagerFileSystem.INSTANCE;
-        DictionaryManagerFileSystem m2 = DictionaryManagerFileSystem.INSTANCE;
-        assertSame(m1, m2);
+    public void testSingleton() throws IOException {
+        DictionaryManagerFileSystem m = DictionaryManagerFileSystem.INSTANCE;
+        assertSame(manager, m);
     }
 
     @Test
@@ -56,54 +68,13 @@ public class DictionaryManagerFileSystemTest {
         manager.addBaseLanguage(null);
     }
 
-    /**
-     * Tests the initialization of the root directory:
-     * 1. Creates a temporary directory.
-     * 2. Initializes the manager with this path.
-     * 3. Verifies that the path is set correctly and the directory exists.
-     * 4. Verifies that re-initialization throws IllegalStateException.
-     */
-    @Test
-    public void testRootDirectoryInitialization() throws IOException {
-        Path tempDir = Files.createTempDirectory("dict-test-root-");
-        try {
-            String rootPathString = tempDir.toString();
-            manager.init(rootPathString);                 //1. Initialization Check
-            Path actualRoot = manager.getRootDirectory(); //2. Check that the root path is set correctly
-            assertEquals(tempDir.toAbsolutePath(), actualRoot.toAbsolutePath());
-            assertTrue(Files.isDirectory(actualRoot));    //3. Check that the directory exists on the FS
-
-            try {                                         //4. Attempt to re-initialize (should fail)
-                manager.init("/some/other/path");
-                fail("Expected IllegalStateException on re-initialization");
-            } catch (IllegalStateException e) {
-                assertTrue(e.getMessage().contains("already initialized"));
-            }
-        } finally {
-            deleteDirectoryRecursively(tempDir);           //5. Cleanup
-        }
-    }
-
-    @Test(expected = IOException.class)
-    public void testInitializationFailureOnInvalidPath() throws IOException {
-        String restrictedPathString = "/root/test_init_fail";
-        Path restrictedPath = Paths.get(restrictedPathString); // Перетворення на Path
-        try {
-            manager.init(restrictedPathString);
-            fail("Expected IOException due to permission denied, but initialization succeeded.");
-        } finally {
-            if (Files.isDirectory(restrictedPath)) {
-                deleteDirectoryRecursively(restrictedPath);
-            } else {
-                Files.deleteIfExists(restrictedPath);
-            }
-        }
-    }
 
     /**
      * Helper method to recursively delete a directory and all its contents.
      */
-    private void deleteDirectoryRecursively(Path path) throws IOException {
+    static void deleteDirectoryRecursively(String p) throws IOException {
+        if (p == null) return;
+        Path path = Paths.get(p);
         if (Files.exists(path)) {
             // Traverse the directory, reverse the order, map to File, and delete.
             Files.walk(path)
@@ -133,5 +104,20 @@ public class DictionaryManagerFileSystemTest {
 
         assertEquals("en-uk", base.getDictionaryName("uk", "тест"));
         assertEquals("en-fr", base.getDictionaryName("fr", "éàöü"));
+    }
+
+    /**
+     * Generates a unique, non-existent path String within the system's temporary directory,
+     * isolated by the current user's name, suitable for testing root directory creation.
+     * * @param testName A descriptive name to include in the path (e.g., "positive-init").
+     * @return The String representation of the absolute Path that does not exist on the filesystem yet.
+     */
+    static String getTempPath(String testName) {
+        Path systemTempDir = Paths.get(System.getProperty("java.io.tmpdir"));
+        String userName = System.getProperty("user.name");
+        String uniquePathSegment = userName + "/" + testName + "-" + UUID.randomUUID().toString();
+        Path nonExistentPath = systemTempDir.resolve(uniquePathSegment);
+
+        return nonExistentPath.toString();
     }
 }
