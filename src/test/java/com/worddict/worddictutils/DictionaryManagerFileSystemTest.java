@@ -10,6 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.io.IOException;
+import java.io.File;
 import java.util.Comparator;
 import java.util.UUID;
 
@@ -68,22 +69,6 @@ public class DictionaryManagerFileSystemTest {
         manager.addBaseLanguage(null);
     }
 
-
-    /**
-     * Helper method to recursively delete a directory and all its contents.
-     */
-    static void deleteDirectoryRecursively(String p) throws IOException {
-        if (p == null) return;
-        Path path = Paths.get(p);
-        if (Files.exists(path)) {
-            // Traverse the directory, reverse the order, map to File, and delete.
-            Files.walk(path)
-                 .sorted(Comparator.reverseOrder())
-                 .map(Path::toFile)
-                 .forEach(java.io.File::delete);
-        }
-    }
-
     @Test
     public void testGetDictionaryName() {
         Language en = Language.getLanguageByCode("en");
@@ -106,40 +91,46 @@ public class DictionaryManagerFileSystemTest {
         assertEquals("en-fr", base.getDictionaryName("fr", "éàöü"));
     }
 
+
+    /**
+     * Tests that calling addBaseLanguage() multiple times with the same
+     * language code registers the language only once and preserves the
+     * original BaseLanguage instance, ensuring that subsequent calls are
+     * skipped (the 'duplicate is skipped' logic).
+     */
     @Test
     public void testAddBaseLanguage_duplicateIsSkipped() {
-        // 1. Перша реєстрація
         Language l = Language.getLanguageByCode("en");
-        BaseLanguage originalBaseLanguage = new MockBaseLanguage(l);
-        manager.addBaseLanguage(originalBaseLanguage);
+        BaseLanguage originalBL = new MockBaseLanguage(l);
+        manager.addBaseLanguage(originalBL);
 
-        // Перевіряємо початковий стан
-        assertEquals("Повинна бути зареєстрована 1 мова.", 1, manager.getBaseLanguages().size());
+        assertEquals("Initial count must be one", 1, manager.getBaseLanguages().size());
         
-        // 2. Створення нового екземпляра для дубліката
-        BaseLanguage newBaseLanguage = new MockBaseLanguage(l);
-        
-        // Викликаємо метод повторно
-        manager.addBaseLanguage(newBaseLanguage);
+        BaseLanguage newBL = new MockBaseLanguage(l);
+        manager.addBaseLanguage(newBL);
 
-        // 3. Перевірка
-        
-        // 3.1. Кількість екземплярів не має змінитися
-        assertEquals("Кількість зареєстрованих мов не має змінитися.", 1, manager.getBaseLanguages().size());
-
-        // 3.2. Перевірка, що збережено оригінальний екземпляр, а не новий
+        assertEquals("Count must remain one", 1, manager.getBaseLanguages().size());
         Optional<BaseLanguage> resultOptional = manager.getBaseLanguage("en");
         assertTrue(resultOptional.isPresent());
         
-        BaseLanguage savedInstance = resultOptional.get();
-        
-        // Збережений екземпляр має бути ТИМ САМИМ, що був доданий першим
-        assertSame("Повинен бути збережений оригінальний екземпляр, а не новий.", 
-                   originalBaseLanguage, savedInstance);
-        
-        // Переконуємося, що новий екземпляр було проігноровано
-        assertNotSame("Новий екземпляр має відрізнятися від збереженого.", 
-                      newBaseLanguage, savedInstance);
+        BaseLanguage saved = resultOptional.get();
+        assertSame("Must keep original instance", originalBL, saved);
+        assertNotSame("New instance must be skipped", newBL, saved);
+    }
+
+    /**
+     * Helper method to recursively delete a directory and all its contents.
+     */
+    static void deleteDirectoryRecursively(String p) throws IOException {
+        if (p == null) return;
+        Path path = Paths.get(p);
+        if (Files.exists(path)) {
+            // Traverse the directory, reverse the order, map to File, and delete.
+            Files.walk(path)
+                 .sorted(Comparator.reverseOrder())
+                 .map(Path::toFile)
+                 .forEach(File::delete);
+        }
     }
 
     /**
