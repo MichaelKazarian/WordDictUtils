@@ -16,6 +16,7 @@ help:
 	@echo " make run          — Run main class from the JAR"
 	@echo " make import-org   — Run import-org task"
 	@echo " make create-dict  — Run create-dict task"
+	@echo " make list-dicts   — Run list-dict task"
 	@echo " make test         — Run tests"
 	@echo " make clean        — Clean build artifacts"
 
@@ -40,6 +41,13 @@ create-dict: $(JAR_FILE)
 create-dict-args: $(JAR_FILE)
 	@java -jar $(JAR_FILE) create-dict $(ARGS)
 
+#make list-dicts DICTDIR=my-dict
+list-dicts: $(JAR_FILE)
+	@java -jar $(JAR_FILE) list-dicts $(DICTDIR) $(SRC)
+
+#make list-dicts-args ARGS="my-dict"
+list-dicts-args: $(JAR_FILE)
+	@java -jar $(JAR_FILE) list-dicts $(ARGS)
 
 test:
 	@mvn -q test

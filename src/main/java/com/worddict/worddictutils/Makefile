@@ -36,3 +36,8 @@ create-dict:
 create-dict-args:
 	@make -C $(ROOT) create-dict-args ARGS="$(ARGS)"
 
+list-dicts: $(JAR_FILE)
+	@make -C $(ROOT) list-dicts DICTDIR="$(DICTDIR)"
+
+list-dicts-args:
+	@make -C $(ROOT) list-dicts-args ARGS="$(ARGS)"

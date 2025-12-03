@@ -10,7 +10,8 @@ import picocli.CommandLine.Command;
     description = "Утиліти для створення словників WordDolphin",
     subcommands = {
         ImportOrgCommand.class,
-        CommandCreateDictionary.class
+        CommandCreateDictionary.class,
+        CommandListDictionaries.class
     }
 )
 public class WordDictUtils implements Runnable {

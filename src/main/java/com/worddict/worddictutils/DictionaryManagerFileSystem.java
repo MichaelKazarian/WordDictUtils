@@ -37,7 +37,7 @@ public enum DictionaryManagerFileSystem implements DictionaryManager {
         this.loadBaseLanguages(this.rootDirectory);
         this.initialized = true;
 
-        System.out.println("Dictionary Manager initialized with root: " + rootPath);
+        // System.out.println("Dictionary Manager initialized with root: " + rootPath);
     }
 
     /**
@@ -74,7 +74,7 @@ public enum DictionaryManagerFileSystem implements DictionaryManager {
                             BaseLanguage bl = new MockBaseLanguage(l);
 
                             languages.put(langCode, bl);
-                            System.out.println("Discovered and registered language: " + langCode);
+                            // System.out.println("Discovered and registered language: " + langCode);
 
                         } catch (Exception e) {
                             // Обробка помилок при створенні Language або BaseLanguage
@@ -151,7 +151,7 @@ public enum DictionaryManagerFileSystem implements DictionaryManager {
 
         if (Files.notExists(langPath)) {
             Files.createDirectories(langPath);
-            System.out.println("Created language directory: " + langPath);
+            // System.out.println("Created language directory: " + langPath);
         }
     }
 
