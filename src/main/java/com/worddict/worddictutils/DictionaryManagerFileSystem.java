@@ -92,6 +92,20 @@ public enum DictionaryManagerFileSystem implements DictionaryManager {
         return rootDirectory;
     }
 
+    /**
+     * Registers a new source language implementation with the dictionary manager.
+     * This method is typically called during the application startup/initialization
+     * phase to configure the available language backends.
+     *
+     * <p>If a BaseLanguage with the same language code is already registered (case-insensitive),
+     * the registration is skipped, and the existing instance is preserved.</p>
+     * * @param baseLanguage The concrete storage implementation (e.g., FileSystemBaseLanguage)
+     * for a specific source language (e.g., 'en', 'uk').
+     * Must not be null, and its language code must be unique among the registered ones.
+     * @throws IllegalArgumentException if the provided BaseLanguage or its language code is null.
+     * @throws RuntimeException if the root directory is inaccessible or the corresponding
+     * language directory cannot be created on the filesystem.
+     */
     @Override
     public void addBaseLanguage(BaseLanguage baseLang) {
         if (baseLang == null || baseLang.getLanguage().getLanguageCode() == null) {
