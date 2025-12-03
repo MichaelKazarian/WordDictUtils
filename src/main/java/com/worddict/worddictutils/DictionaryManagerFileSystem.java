@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.stream.Stream;
 
 import com.worddict.worddictcore.Language;
 
@@ -32,6 +33,8 @@ public enum DictionaryManagerFileSystem implements DictionaryManager {
 
         Path rootPath = setupRootDirectory(rootPathString);
         this.rootDirectory = rootPath;
+
+        this.loadBaseLanguages(this.rootDirectory);
         this.initialized = true;
 
         System.out.println("Dictionary Manager initialized with root: " + rootPath);
@@ -42,6 +45,7 @@ public enum DictionaryManagerFileSystem implements DictionaryManager {
      * @param rootPathString The string path provided by the user.
      * @return The absolute Path object of the root directory.
      * @throws java.io.IOException if directory creation fails.
+
      */
     private Path setupRootDirectory(String rootPathString) throws IOException {
         Path rootPath = Paths.get(rootPathString).toAbsolutePath();
@@ -51,6 +55,34 @@ public enum DictionaryManagerFileSystem implements DictionaryManager {
         }
 
         return rootPath;
+    }
+
+    /**
+     * Сканує кореневу директорію на наявність піддиректорій,
+     * які вважаються мовними кодами, і завантажує їх як BaseLanguage.
+     * @param rootPath Кореневий шлях словника.
+     * @throws IOException Якщо не вдається просканувати директорії.
+     */
+    private void loadBaseLanguages(Path rootPath) throws IOException {
+        try (Stream<Path> subdirectories = Files.list(rootPath)) {
+            subdirectories
+                .filter(Files::isDirectory)
+                .forEach(langDir -> {
+                        String langCode = langDir.getFileName().toString().toLowerCase(Locale.ROOT);
+                        try {
+                            Language l = Language.getLanguageByCode(langCode);
+                            BaseLanguage bl = new MockBaseLanguage(l);
+
+                            languages.put(langCode, bl);
+                            System.out.println("Discovered and registered language: " + langCode);
+
+                        } catch (Exception e) {
+                            // Обробка помилок при створенні Language або BaseLanguage
+                            System.err.println("Skipping language directory " + langCode +
+                                               " due to error during registration: " + e.getMessage());
+                        }
+                    });
+        }
     }
 
     public Path getRootDirectory() {
@@ -65,14 +97,21 @@ public enum DictionaryManagerFileSystem implements DictionaryManager {
         if (baseLanguage == null || baseLanguage.getLanguage().getLanguageCode() == null) {
             throw new IllegalArgumentException("BaseLanguage or its code cannot be null");
         }
-        String languageCode = baseLanguage.getLanguage().getLanguageCode().toLowerCase(Locale.ROOT);
+        String langCode = baseLanguage.getLanguage().getLanguageCode().toLowerCase(Locale.ROOT);
+
+        // Перевіряємо, чи вже завантажена мова під час ініціалізації
+        if (languages.containsKey(langCode)) {
+            System.out.println("Warning: Language " + langCode + " already loaded. Skipped.");
+            return;
+        }
+        
         try {
-            setupLanguageDirectory(languageCode);
+            setupLanguageDirectory(langCode);
         } catch (IOException e) {
-            throw new RuntimeException("Failed to create directory for language: " + languageCode, e);
+            throw new RuntimeException("Failed to create directory for language: " + langCode, e);
         }
 
-        languages.put(languageCode, baseLanguage);
+        languages.put(langCode, baseLanguage);
     }
 
     /**
@@ -95,10 +134,8 @@ public enum DictionaryManagerFileSystem implements DictionaryManager {
     @Override
     public Optional<BaseLanguage> getBaseLanguage(String sourceLangCode) {
         if (sourceLangCode == null) {
-            // Використовуйте порожній Optional
             return Optional.empty(); 
         }
-        // Використовуйте новіший метод getOrDefault або Optional.ofNullable
         return Optional.ofNullable(languages.get(sourceLangCode.toLowerCase()));
     }
 

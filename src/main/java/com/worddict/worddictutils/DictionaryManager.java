@@ -8,7 +8,6 @@ import java.util.Optional;
  * Allows different storage backends (file system, database, cloud, etc.).
  */
 public interface DictionaryManager {
-
     /**
      * Registers a new source language implementation with the dictionary manager.
      * This method is typically called once during the application startup/initialization 

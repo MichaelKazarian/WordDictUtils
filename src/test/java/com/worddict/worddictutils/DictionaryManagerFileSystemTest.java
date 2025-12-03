@@ -106,6 +106,42 @@ public class DictionaryManagerFileSystemTest {
         assertEquals("en-fr", base.getDictionaryName("fr", "éàöü"));
     }
 
+    @Test
+    public void testAddBaseLanguage_duplicateIsSkipped() {
+        // 1. Перша реєстрація
+        Language l = Language.getLanguageByCode("en");
+        BaseLanguage originalBaseLanguage = new MockBaseLanguage(l);
+        manager.addBaseLanguage(originalBaseLanguage);
+
+        // Перевіряємо початковий стан
+        assertEquals("Повинна бути зареєстрована 1 мова.", 1, manager.getBaseLanguages().size());
+        
+        // 2. Створення нового екземпляра для дубліката
+        BaseLanguage newBaseLanguage = new MockBaseLanguage(l);
+        
+        // Викликаємо метод повторно
+        manager.addBaseLanguage(newBaseLanguage);
+
+        // 3. Перевірка
+        
+        // 3.1. Кількість екземплярів не має змінитися
+        assertEquals("Кількість зареєстрованих мов не має змінитися.", 1, manager.getBaseLanguages().size());
+
+        // 3.2. Перевірка, що збережено оригінальний екземпляр, а не новий
+        Optional<BaseLanguage> resultOptional = manager.getBaseLanguage("en");
+        assertTrue(resultOptional.isPresent());
+        
+        BaseLanguage savedInstance = resultOptional.get();
+        
+        // Збережений екземпляр має бути ТИМ САМИМ, що був доданий першим
+        assertSame("Повинен бути збережений оригінальний екземпляр, а не новий.", 
+                   originalBaseLanguage, savedInstance);
+        
+        // Переконуємося, що новий екземпляр було проігноровано
+        assertNotSame("Новий екземпляр має відрізнятися від збереженого.", 
+                      newBaseLanguage, savedInstance);
+    }
+
     /**
      * Generates a unique, non-existent path String within the system's temporary directory,
      * isolated by the current user's name, suitable for testing root directory creation.
