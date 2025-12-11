@@ -35,20 +35,21 @@
 і додати їх у вказаний каталог
 
 ** Створення RestApi для доступа
-*** Модель словника
-Клас Dictionary представляє один словник для конкретної мовної пари:
-вихідна мова (source) → цільова мова (target).
-Наприклад, англійсько-український словник містить англійські слова з українськими перекладами.
-Усі операції зі словами нечутливі до регістру.
 *** Менеджер словників
 **** Загальна концепція
 Необхідний верхній рівень управління словниками (файлова система, БД тощо).
-Цей рівень дозволяє працювати з кількома вихідними (базовими) мовами одночасно.
+Цей рівень дозволяє працювати з кількома вихідними базовими мовами одночасно і описується класом Baselanguage.
+Вихідна мова (source) → цільова мова (target).
 Для кожної базової мови можна мати багато словників у різні цільові мови, включно з кількома іменованими словниками на одну й ту саму пару.
+**** Модель словника
+ Клас Dictionary представляє словник для конкретної мови:
+ Наприклад, англійсько-український словник містить англійські слова з українськими перекладами.
+ Усі операції зі словами нечутливі до регістру.
+
 **** Структура каталогів (файлова реалізація)
 #+BEGIN_SRC
 dictionaries/                           ← глобальний корінь
-├── en/                                 ← baseLanguage = "en"
+├── en/                                 ← BaseLanguage = "en"
 │   ├── uk/                             ← стандартний словник en→uk (без власної назви)
 │   │   ├── description.json
 │   │   ├── words/
@@ -80,29 +81,36 @@ dictionaries/                           ← глобальний корінь
 **** Структура каталогів відображається так:
 Структура каталогів в коді віжображається так:
 DictionaryManager          ← глобальний, один на всю програму
-    └── List<BaseLanguage>  ← кожна — одна вихідна мова (en, es, uk…)
-            └── List<Dictionary> ← словники en→uk, en→de, en→uk_MyDict тощо
+   └── List<BaseLanguage>  ← кожна — одна вихідна мова (en, es, uk…)
+           └── List<Dictionary> ← словники en→uk, en→de, en→uk_MyDict
 **** Класи, які вже задіяні в поточній архітектурі менеджеру словників
 
 com.worddict.worddictcore.Language 
  — опис мови (код ISO-639-1, назва англійською, локальна назва, рейтинг)
+com.worddict.worddictutils.DictionaryManager
+ - Глобальний менеджер — один екземпляр на всю програму (Singleton)
+ - Тримає список усіх BaseLanguage (en, es, uk, de…)
+ - Єдина точка входу для доступу до будь-якого словника
+ - Методи: addBaseLanguage(), getBaseLanguages(), getBaseLanguage(code)
+com.worddict.worddictutils.DictionaryManagerFileSystem:
+ - Ралізує DictionaryManager в об'єктах файлової системи
+com.worddict.worddictutils.BaseLanguage
+ - Абстрактний клас представляє одну базову мову — наприклад, англійську
+ - Керує всіма словниками, що мають цю мову як source
+ - Методи: createDictionary(…), listDictionaries(), removeDictionary(…)
+com.worddict.worddictutils.BaseLanguageFileSystem extends BaseLanguage
+ - реалізує BaseLanguage в об'єктах ФС
 com.worddict.worddictutils.Dictionary
  — Базовий (abstract) клас одного конкретного словника.
- - Представляє одну мовну пару source → target.
- - Відповідає за операції зі словами, аудіо, статистикою
-com.worddict.worddictutils.BaseLanguage
-   - Абстрактний клас представляє одну базову мову — наприклад, англійську
-   - Керує всіма словниками, що мають цю мову як source
-   - Методи: createDictionary(…), listDictionaries(), removeDictionary(…)
-com.worddict.worddictutils.DictionaryManager
-   - Глобальний менеджер — один екземпляр на всю програму (Singleton)
-   - Тримає список усіх BaseLanguage (en, es, uk, de…)
-   - Єдина точка входу для доступу до будь-якого словника
-   - Методи: addBaseLanguage(), getBaseLanguages(), getBaseLanguage(code)
+ - Відповідає за операції з словами, аудіо, статистикою:
+   - Перевірка чи існує слово.
+   - Додавання, редагування, видалення слова.
+   - Додавання та видалення аудіо до слова.
+   - Пошук слова використовуючи com.worddict.wiktionarybot
+   - Оперує екземплярами com.worddict.worddictcore.Word
 
 **** Класи, яких ще немає (плануються)
-  - FileSystemBaseLanguage extends BaseLanguage
-  - FileSystemDictionary    extends Dictionary
+ - com.worddict.worddictutils.DictionaryFileSystem extends Dictionary
 
 ** Технічні деталі
 *** Залежності
