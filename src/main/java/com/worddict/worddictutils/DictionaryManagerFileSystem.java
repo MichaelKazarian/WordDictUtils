@@ -139,20 +139,35 @@ public enum DictionaryManagerFileSystem implements DictionaryManager {
     }
 
     /**
+     * TODO: add to parent interface as setupLanguageStorage()
      * Creates the directory for the given language code within the manager's root directory.
      * * <p>The method constructs the path and creates the directory only if it does not already exist.</p>
-     * * @param languageCode The standard language code (e.g., "en", "es").
+     * * @param langCode The standard language code (e.g., "en", "es").
      * @throws IOException If the root directory is inaccessible or the language directory
      * cannot be created.
      */
-    private void setupLanguageDirectory(String languageCode) throws IOException {
-        Path rootPath = getRootDirectory();
-        Path langPath = rootPath.resolve(languageCode);
+    private void setupLanguageDirectory(String langCode) throws IOException {
+        Path langPath = getLangPath(langCode);
 
         if (Files.notExists(langPath)) {
             Files.createDirectories(langPath);
             // System.out.println("Created language directory: " + langPath);
         }
+        setupSoundsStorage(langCode);
+    }
+
+    // TODO: add to parent interface
+    public void setupSoundsStorage(String lngCode) throws IOException {
+        Path soundsPath = getLangPath(lngCode).resolve("sounds");
+        if (Files.notExists(soundsPath)) {
+            Files.createDirectories(soundsPath);
+            // System.out.println("Created sounds directory: " + soundsPath);
+        }
+    }
+
+    private Path getLangPath(String langCode) {
+        Path rootPath = getRootDirectory();
+        return rootPath.resolve(langCode);
     }
 
     @Override
