@@ -54,21 +54,25 @@ public class CommandListDictionaries implements Runnable {
     }
 
     /**
-     * Lists all registered BaseLanguages.
+     * Lists all registered BaseLanguages, including the count of dictionaries for each.
      */
     private void listAllBaseLanguages(DictionaryManager manager) {
         Collection<BaseLanguage> languages = manager.getBaseLanguages();
-        
+         
         System.out.println("Registered Source Languages (" + languages.size() + "):");
-        
+         
         if (languages.isEmpty()) {
             return;
         }
 
         languages.stream()
-            .map(bl -> bl.getLanguage().getLanguageCode().toUpperCase())
-            .forEach(code -> System.out.println(" - " + code));
-            
+            .forEach(bl -> {
+                String code = bl.getLanguage().getLanguageCode();
+                int dictCount = bl.listDictionaries().size(); 
+                
+                System.out.println(" - " + code + " (" + dictCount + " dictionaries)");
+            });
+             
         System.out.println("\nHint: To see dictionaries, re-run with '--source [CODE]'");
     }
 
@@ -94,13 +98,11 @@ public class CommandListDictionaries implements Runnable {
             return;
         }
         
-        System.out.println("[WARNING] Real dictionary listing logic is currently mocked.");
-        System.out.println("Dictionaries (Mocked List):");
-        
+        System.out.println("Dictionaries:");
         for (Dictionary dict : dictionaries) {
              // Припускаємо, що Dictionary має метод getName()
              // System.out.println(" - " + dict.getName());
-             System.out.println(" - [MOCK] Dictionary: " + code + "-target (Size: 0)"); 
+            System.out.println(" - Dictionary: " + dict.getName() + " (Words: "+dict.wordsCount()+ ")");
         }
     }
 }

@@ -50,24 +50,26 @@ public abstract class BaseLanguage {
      * If additionalName contains no allowed characters, it is ignored.
      *
      * Examples:
-     *   getDictionaryName("uk")          → "en-uk"
-     *   getDictionaryName("uk", "Full")  → "en-uk-full"
-     *   getDictionaryName("uk", "тест")  → "en-uk"
-     *   getDictionaryName("fr", "éàöü")  → "en-fr"
+     *   getFoollDictionaryName("uk")          → "en-uk"
+     *   getFoolDictionaryName("uk", "Full")  → "en-uk-full"
+     *   getFoolDictionaryName("uk", "тест")  → "en-uk"
+     *   getFoolDictionaryName("fr", "éàöü")  → "en-fr"
      *
      * @param target target language code
      * @param additionalName optional custom part of the name
      * @return normalized, filesystem-safe dictionary name
      */
-    public String getDictionaryName(String target, String additionalName) {
-        String base = language.getLanguageCode() + "-" + target;
+    public String getFullDictionaryName(String target, String additionalName) {
+        return language.getLanguageCode() + "-" + getDictionaryName(target,additionalName);
+    }
 
+    public String getDictionaryName(String target, String additionalName) {
         if (additionalName == null || additionalName.trim().isEmpty()) {
-            return sanitize(base);
+            return sanitize(target);
         }
 
         String normalized = additionalName.trim().replace(" ", "-");
-        return sanitize(base + "-" + normalized);
+        return sanitize(target + "-" + normalized);
     }
 
     /**

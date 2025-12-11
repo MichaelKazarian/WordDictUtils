@@ -13,26 +13,35 @@ import java.util.Optional;
  */
 public class Dictionary {
 
-    protected final Language sourceLanguage;
     protected final Language targetLanguage;
+    protected String additionalName;
 
     /** Creates a dictionary for a language pair. */
     public Dictionary(Language sourceLanguage, Language targetLanguage) {
-        this.sourceLanguage = Objects.requireNonNull(sourceLanguage);
+        this(sourceLanguage, targetLanguage, "");
+    }
+
+    public Dictionary(Language sourceLanguage, Language targetLanguage, String additionalName) {
         this.targetLanguage = Objects.requireNonNull(targetLanguage);
         if (sourceLanguage.equals(targetLanguage)) {
             throw new IllegalArgumentException("Source and target languages must differ");
         }
-    }
-
-    /** Returns the source language. */
-    public Language getSourceLanguage() {
-        return sourceLanguage;
+        this.additionalName = additionalName;
     }
 
     /** Returns the target language. */
     public Language getTargetLanguage() {
         return targetLanguage;
+    }
+
+    public String getAdditionalName() {
+        return additionalName;
+    }
+
+    public String getName() {
+        String r = targetLanguage.getLanguageCode();
+        if (!additionalName.isEmpty()) r += "-"+additionalName;
+        return r;
     }
 
     // === Word Operations ===
@@ -75,7 +84,7 @@ public class Dictionary {
     }
 
     /** Saves audio for a word (default: no-op). */
-    public void saveAudio(String wordText, byte[] audioData) {
+    public void addAudio(String wordText, byte[] audioData) {
         // no-op
     }
 
@@ -91,9 +100,6 @@ public class Dictionary {
 
     @Override
     public String toString() {
-        return String.format("Dictionary[%s → %s, words: %d]",
-                sourceLanguage.getLanguageCode(),
-                targetLanguage.getLanguageCode(),
-                wordsCount());
+        return String.format("Dictionary[%s, words: %d]", getName(), wordsCount());
     }
 }

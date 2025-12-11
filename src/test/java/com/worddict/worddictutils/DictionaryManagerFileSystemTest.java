@@ -73,13 +73,13 @@ public class DictionaryManagerFileSystemTest {
     public void testGetDictionaryName() {
         Language en = Language.getLanguageByCode("en");
         BaseLanguage base = new MockBaseLanguage(en);
-        assertEquals("en-uk", base.getDictionaryName("uk", null));
-        assertEquals("en-uk", base.getDictionaryName("uk", ""));
-        assertEquals("en-de-extra", base.getDictionaryName("de", "Extra"));
-        assertEquals("en-fr-my-name", base.getDictionaryName("fr", " my name "));
-        assertEquals("en-pl-my-dict", base.getDictionaryName("pl", "my*dict?"));
-        assertEquals("en-pl-my-dict", base.getDictionaryName("pl", "my-dict"));
-        assertEquals("en-it-a-b-c", base.getDictionaryName("it", "A--B--C"));
+        assertEquals("en-uk", base.getFullDictionaryName("uk", null));
+        assertEquals("en-uk", base.getFullDictionaryName("uk", ""));
+        assertEquals("en-de-extra", base.getFullDictionaryName("de", "Extra"));
+        assertEquals("en-fr-my-name", base.getFullDictionaryName("fr", " my name "));
+        assertEquals("en-pl-my-dict", base.getFullDictionaryName("pl", "my*dict?"));
+        assertEquals("en-pl-my-dict", base.getFullDictionaryName("pl", "my-dict"));
+        assertEquals("en-it-a-b-c", base.getFullDictionaryName("it", "A--B--C"));
     }
 
     @Test
@@ -87,8 +87,8 @@ public class DictionaryManagerFileSystemTest {
         Language en = Language.getLanguageByCode("en");
         BaseLanguage base = new MockBaseLanguage(en);
 
-        assertEquals("en-uk", base.getDictionaryName("uk", "тест"));
-        assertEquals("en-fr", base.getDictionaryName("fr", "éàöü"));
+        assertEquals("en-uk", base.getFullDictionaryName("uk", "тест"));
+        assertEquals("en-fr", base.getFullDictionaryName("fr", "éàöü"));
     }
 
 

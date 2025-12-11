@@ -47,14 +47,17 @@ public class CommandCreateDictionary implements Runnable {
             Language source = Language.getLanguageByCode(sourceLangCode);
             Language target = Language.getLanguageByCode(targetLangCode);
 
-            manager.addBaseLanguage(new MockBaseLanguage(source));
+            BaseLanguage baseLangFs = new BaseLanguageFileSystem(source, manager.getRootDirectory());
+           
+            manager.addBaseLanguage(baseLangFs);
             Optional<BaseLanguage> baseOptional = manager.getBaseLanguage(sourceLangCode);
 
             if (baseOptional.isEmpty()) {
                 System.err.println("Error: BaseLanguage implementation for '" +
-                                   sourceLangCode + "' not registered.");
+                                     sourceLangCode + "' not registered.");
                 return;
             }
+            // Гарантовано отримуємо щойно зареєстрований екземпляр BaseLanguageFileSystem
             BaseLanguage base = baseOptional.get();
 
             Dictionary dict = (dictName == null)
@@ -63,15 +66,19 @@ public class CommandCreateDictionary implements Runnable {
 
             System.out.println("Created dictionary:");
             System.out.print("  Path (Root): " + manager.getRootDirectory() + " → ");
-            System.out.println("  name: " +
-                               base.getDictionaryName(targetLangCode, dictName));
+            // Оскільки dict.toString() може не містити повного шляху, виводимо згенеровану назву
+            String finalDictName = base.getDictionaryName(targetLangCode, dictName);
+            
+            System.out.println(String.format("  Name: %s, Full Path: %s",
+                                 finalDictName, 
+                                 ((BaseLanguageFileSystem)base).getDictionaryPath(finalDictName).toString()));
 
         } catch (IllegalArgumentException iae) {
             System.err.println("Input Error: " + iae.getMessage());
         } catch (IllegalStateException ise) {
             System.err.println("Manager Error: " + ise.getMessage());
         } catch (IOException ioe) {
-            System.err.println("Filesystem Error: Could not initialize root directory: " + ioe.getMessage());
+            System.err.println("Filesystem Error: Could not initialize root directory or language structure: " + ioe.getMessage());
         } catch (Exception e) {
             System.err.println("An unexpected error occurred: " + e.getMessage());
         }

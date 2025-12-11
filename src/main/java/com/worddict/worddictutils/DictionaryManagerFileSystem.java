@@ -71,8 +71,7 @@ public enum DictionaryManagerFileSystem implements DictionaryManager {
                         String langCode = langDir.getFileName().toString().toLowerCase(Locale.ROOT);
                         try {
                             Language l = Language.getLanguageByCode(langCode);
-                            BaseLanguage bl = new MockBaseLanguage(l);
-
+                            BaseLanguage bl = new BaseLanguageFileSystem(l, rootPath);
                             languages.put(langCode, bl);
                             // System.out.println("Discovered and registered language: " + langCode);
 
@@ -112,15 +111,7 @@ public enum DictionaryManagerFileSystem implements DictionaryManager {
             throw new IllegalArgumentException("BaseLanguage or its code cannot be null");
         }
         String langCode = baseLang.getLanguage().getLanguageCode().toLowerCase(Locale.ROOT);
-
         if (handleDuplicateLanguage(langCode)) return;
-        
-        try {
-            setupLanguageDirectory(langCode);
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to create directory for language: " + langCode, e);
-        }
-
         languages.put(langCode, baseLang);
     }
 
@@ -136,38 +127,6 @@ public enum DictionaryManagerFileSystem implements DictionaryManager {
             return true;
         }
         return false;
-    }
-
-    /**
-     * TODO: add to parent interface as setupLanguageStorage()
-     * Creates the directory for the given language code within the manager's root directory.
-     * * <p>The method constructs the path and creates the directory only if it does not already exist.</p>
-     * * @param langCode The standard language code (e.g., "en", "es").
-     * @throws IOException If the root directory is inaccessible or the language directory
-     * cannot be created.
-     */
-    private void setupLanguageDirectory(String langCode) throws IOException {
-        Path langPath = getLangPath(langCode);
-
-        if (Files.notExists(langPath)) {
-            Files.createDirectories(langPath);
-            // System.out.println("Created language directory: " + langPath);
-        }
-        setupSoundsStorage(langCode);
-    }
-
-    // TODO: add to parent interface
-    public void setupSoundsStorage(String lngCode) throws IOException {
-        Path soundsPath = getLangPath(lngCode).resolve("sounds");
-        if (Files.notExists(soundsPath)) {
-            Files.createDirectories(soundsPath);
-            // System.out.println("Created sounds directory: " + soundsPath);
-        }
-    }
-
-    private Path getLangPath(String langCode) {
-        Path rootPath = getRootDirectory();
-        return rootPath.resolve(langCode);
     }
 
     @Override
