@@ -81,21 +81,13 @@ public class BaseLanguageFileSystem extends BaseLanguage {
     
     @Override
     public Dictionary createDictionary(Language targetLanguage, String additionalName) {
-        // 1. Формуємо унікальну назву
         String dictName = getDictionaryName(targetLanguage.getLanguageCode(), additionalName);
         Path dictPath = getDictionaryPath(dictName);
-
-        // 2. Перевірка унікальності (за каталогом ФС та внутрішнім Map)
-        if (Files.exists(dictPath) || dictionaries.containsKey(dictName)) {
-            throw new IllegalArgumentException("Dictionary already exists: " + dictPath);
-        }
-        
         try {
+            checkDictionaryUniqueness(dictName, dictPath);
             Files.createDirectories(dictPath);
             // TODO: Замінити на new DictionaryFileSystem(...)
-            Dictionary newDict = new Dictionary(this.language, targetLanguage); 
-            
-            // 4. Реєстрація у внутрішній мапі
+            Dictionary newDict = new Dictionary(this.language, targetLanguage, additionalName);
             dictionaries.put(dictName, newDict);
             return newDict;
             
@@ -115,35 +107,32 @@ public class BaseLanguageFileSystem extends BaseLanguage {
         System.out.println("LOG: Attempting to remove dictionary (placeholder): " + dictionary.getTargetLanguage().getLanguageCode());
     }
 
+    /**
+     * Scans the filesystem for subdirectories that represent dictionaries,
+     * validates their names, and loads them. This method is called during initialization.
+     * @return Map of unique dictionary names to Dictionary objects (DictionaryFileSystem).
+     */
     private Map<String, Dictionary> loadDictionariesFromFilesystem() {
         Map<String, Dictionary> loadedDicts = new HashMap<>();
-         
         try (Stream<Path> subdirectories = Files.list(this.languageRoot)) {
             subdirectories
                 .filter(Files::isDirectory)
-                // Ігноруємо спеціалізований каталог --sounds
-                .filter(p -> !p.getFileName().toString().equals("--sounds")) 
+                .filter(p -> !p.getFileName().toString().startsWith("--"))
                 .forEach(dictDir -> {
                     String dictName = dictDir.getFileName().toString();
                     
-                    // 1. ПЕРЕВІРКА ФОРМАТУ ЗА РЕГУЛЯРНИМ ВИРАЗОМ
                     if (!dictName.matches(DICT_NAME_PATTERN)) {
                         System.err.println("Skipping directory '" + dictName + 
                                            "': Does not match dictionary naming convention (target[-name]).");
                         return;
                     }
-                    
                     try {
-                        // 2. Екстракція target code (завжди перші 2 літери)
                         String targetCode = dictName.substring(0, 2);
-                        
-                        // 3. Екстракція additionalName (якщо є)
                         String additionalName = "";
                         if (dictName.length() > 2 && dictName.charAt(2) == '-') {
                             additionalName = dictName.substring(3); // Всі символи після першого дефісу
                         }
                         
-                        // 4. Валідація мови
                         Language targetLang = Language.getLanguageByCode(targetCode);
                         
                         // 5. Створення об'єкта (використовуємо заглушку Dictionary з оновленим конструктором)
@@ -152,7 +141,6 @@ public class BaseLanguageFileSystem extends BaseLanguage {
                         loadedDicts.put(dictName, dict);
                          
                     } catch (IllegalArgumentException iae) {
-                         // Спіймає помилку, якщо targetCode є, але не є валідним кодом мови (наприклад, 'zx')
                          System.err.println("Skipping directory '" + dictName + 
                                             "': Invalid target language code. " + iae.getMessage());
                     } catch (Exception e) {
@@ -176,5 +164,21 @@ public class BaseLanguageFileSystem extends BaseLanguage {
     public List<Dictionary> listDictionaries() {
         System.out.println(dictionaries.values());
         return new ArrayList<>(dictionaries.values());
+    }
+
+    /**
+     * Checks if a dictionary with the given name already exists in the internal storage or on the filesystem.
+     * @param dictName Unique dictionary name (target[-additional]).
+     * @param dictPath Path to the dictionary directory on the filesystem.
+     * @throws IllegalArgumentException If the dictionary already exists.
+     * @throws IOException If a filesystem error occurs.
+     */
+    private void checkDictionaryUniqueness(String dictName, Path dictPath) throws IOException {
+        if (dictionaries.containsKey(dictName)) {
+            throw new IllegalArgumentException("Dictionary already registered internally: " + dictName);
+        }
+        if (Files.exists(dictPath)) {
+            throw new IllegalArgumentException("Dictionary directory already exists on filesystem: " + dictPath);
+        }
     }
 }
