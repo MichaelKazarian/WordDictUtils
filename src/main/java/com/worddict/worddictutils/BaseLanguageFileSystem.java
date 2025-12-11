@@ -162,7 +162,6 @@ public class BaseLanguageFileSystem extends BaseLanguage {
      */
     @Override
     public List<Dictionary> listDictionaries() {
-        System.out.println(dictionaries.values());
         return new ArrayList<>(dictionaries.values());
     }
 
