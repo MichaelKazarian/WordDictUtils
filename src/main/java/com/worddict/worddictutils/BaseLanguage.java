@@ -1,6 +1,7 @@
 package com.worddict.worddictutils;
 
 import java.util.*;
+import java.io.IOException;
 import com.worddict.worddictcore.Language;
 
 /**
@@ -45,6 +46,24 @@ public abstract class BaseLanguage {
      */
     public abstract List<Dictionary> listDictionaries();
 
+    /**
+     * Ensures the core storage area for the base language is initialized.
+     * This method is responsible for setting up the necessary root structure
+     * for the language's data.
+     *
+     * @throws Exception if storage setup fails.
+     */
+    public abstract void setupLanguageStorage() throws Exception;
+
+    /**
+     * Ensures the centralized audio storage directory is initialized.
+     * This directory is shared by all dictionaries within this base
+     * language for storing sound files.
+     *
+     * @throws Exception if storage setup fails.
+     */
+    public abstract void setupSoundsStorage() throws Exception;
+    
     /**
      * Generates a filesystem-safe dictionary name.
      * If additionalName contains no allowed characters, it is ignored.

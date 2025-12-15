@@ -39,28 +39,37 @@ public class BaseLanguageFileSystem extends BaseLanguage {
 
         String langCode = language.getLanguageCode().toLowerCase();
         this.languageRoot = rootPath.resolve(langCode);
-        initializeDirectoryStructure();
-        
+
+        setupLanguageStorage();
+        setupSoundsStorage();
+
         if (!Files.isDirectory(languageRoot)) {
              throw new IllegalArgumentException("Base language root path is not a directory: " + languageRoot);
         }
 
         this.dictionaries.putAll(loadDictionariesFromFilesystem());
     }
-    
+
     /**
-     * Ensures the root directory for this BaseLanguage and its mandatory '--sounds' storage 
-     * subdirectory exist on the filesystem.
+     * Create the base language directory (e.g., 'en')
+     * Ensures the root directory for this BaseLanguage
+     * (e.g., '/dictionaries/en') exists.
      * @throws IOException if directory creation fails.
      */
-    private void initializeDirectoryStructure() throws IOException {
-        // Створення каталогу базової мови (наприклад, 'en')
+    public void setupLanguageStorage() throws IOException {
         if (Files.notExists(this.languageRoot)) {
             Files.createDirectories(this.languageRoot);
             // System.out.println("Created BaseLanguage directory: " + this.languageRoot);
         }
-        
-        // Створення каталогу для аудіо-файлів (наприклад, 'en/--sounds')
+    }
+
+    /**
+     * Create the centralized audio files directory (e.g., 'en/--sounds')
+     * Ensures the mandatory '--sounds' storage subdirectory 
+     * (e.g., '/dictionaries/en/--sounds') exists.
+     * @throws IOException if directory creation fails.
+     */
+    public void setupSoundsStorage() throws IOException {
         Path soundsPath = this.languageRoot.resolve("--sounds");
         if (Files.notExists(soundsPath)) {
             Files.createDirectories(soundsPath);

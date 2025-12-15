@@ -22,6 +22,16 @@ public class MockBaseLanguage extends BaseLanguage {
     };
 
     @Override
+    public void setupLanguageStorage() throws Exception {
+        //
+    }
+
+    @Override
+    public void setupSoundsStorage() throws Exception {
+        //
+    }
+
+    @Override
     public Dictionary createDictionary(Language targetLanguage) {
         return createDictionary(targetLanguage, "Mock dictionary name");
     };
