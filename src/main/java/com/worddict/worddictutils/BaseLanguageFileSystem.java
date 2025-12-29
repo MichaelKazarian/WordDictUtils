@@ -24,7 +24,6 @@ import java.util.stream.Stream;
 public class BaseLanguageFileSystem extends BaseLanguage {
 
     private final Path languageRoot;
-    private final Map<String, Dictionary> dictionaries = new HashMap<>();
     private static final String DICT_NAME_PATTERN = "^[a-z]{2}(?:-[a-z0-9-_]+)?$";
 
     /**
@@ -92,14 +91,17 @@ public class BaseLanguageFileSystem extends BaseLanguage {
     public Dictionary createDictionary(Language targetLanguage, String additionalName) {
         String dictName = getDictionaryName(targetLanguage.getLanguageCode(), additionalName);
         Path dictPath = getDictionaryPath(dictName);
+
+        if (dictionaries.containsKey(dictName)) {
+            return dictionaries.get(dictName);
+        }
+
         try {
             checkDictionaryUniqueness(dictName, dictPath);
             Files.createDirectories(dictPath);
-            // TODO: Замінити на new DictionaryFileSystem(...)
-            Dictionary newDict = new Dictionary(this.language, targetLanguage, additionalName);
+            DictionaryFileSystem newDict = new DictionaryFileSystem(this, targetLanguage, additionalName);
             dictionaries.put(dictName, newDict);
             return newDict;
-            
         } catch (IOException e) {
             throw new RuntimeException("Failed to create dictionary directory: " + dictPath, e);
         }
@@ -145,8 +147,7 @@ public class BaseLanguageFileSystem extends BaseLanguage {
                         Language targetLang = Language.getLanguageByCode(targetCode);
                         
                         // 5. Створення об'єкта (використовуємо заглушку Dictionary з оновленим конструктором)
-                        // TODO: Замінити на new DictionaryFileSystem(...)
-                        Dictionary dict = new Dictionary(this.language, targetLang, additionalName); 
+                        Dictionary dict = new DictionaryFileSystem(this, targetLang, additionalName); 
                         loadedDicts.put(dictName, dict);
                          
                     } catch (IllegalArgumentException iae) {
