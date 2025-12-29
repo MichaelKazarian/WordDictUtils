@@ -41,3 +41,6 @@ list-dicts: $(JAR_FILE)
 
 list-dicts-args:
 	@make -C $(ROOT) list-dicts-args ARGS="$(ARGS)"
+
+add-word:
+	@make -C $(ROOT) add-word ARGS="$(ARGS)"

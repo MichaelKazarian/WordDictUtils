@@ -49,6 +49,9 @@ list-dicts: $(JAR_FILE)
 list-dicts-args: $(JAR_FILE)
 	@java -jar $(JAR_FILE) list-dicts $(ARGS)
 
+add-word: $(JAR_FILE)
+	@java -jar $(JAR_FILE) add-word $(ARGS)
+
 test:
 	@mvn -q test
 
