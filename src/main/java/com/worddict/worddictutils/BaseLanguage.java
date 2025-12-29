@@ -13,6 +13,7 @@ import com.worddict.worddictcore.Language;
 public abstract class BaseLanguage {
     /** The source language */
     protected final Language language;
+    protected final Map<String, Dictionary> dictionaries = new HashMap<>();
 
     protected BaseLanguage(Language language) {
         this.language = Objects.requireNonNull(language);
@@ -106,4 +107,22 @@ public abstract class BaseLanguage {
         return cleaned.toLowerCase(Locale.ROOT);
     }
 
+    /**
+     * Повертає існуючий словник за мовою та додатковим ім'ям.
+     */
+    public Optional<Dictionary> getDictionary(Language targetLanguage, String additionalName) {
+        String dictName = getDictionaryName(targetLanguage.getLanguageCode(), additionalName);
+        return Optional.ofNullable(dictionaries.get(dictName));
+    }
+
+    /**
+     * Оновлений getOrCreate: тепер він використовує внутрішню логіку класу.
+     */
+    public Dictionary getOrCreateDictionary(Language targetLanguage, String additionalName) {
+        String dictName = getDictionaryName(targetLanguage.getLanguageCode(), additionalName);
+        if (dictionaries.containsKey(dictName)) {
+            return dictionaries.get(dictName);
+        }
+        return createDictionary(targetLanguage, additionalName);
+    }
 }
