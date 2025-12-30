@@ -9,6 +9,9 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+
+import java.time.LocalDateTime;
 
 public class DictionaryFileSystem extends Dictionary {
 
@@ -35,9 +38,62 @@ public class DictionaryFileSystem extends Dictionary {
 
         try {
             if (Files.notExists(subDir)) Files.createDirectories(subDir);
+            boolean isNewWord = Files.notExists(filePath);
             Files.writeString(filePath, word.toJsonObject().toString(2), StandardCharsets.UTF_8);
+            if (isNewWord) updateStats(bucket);
         } catch (IOException e) {
             throw new RuntimeException("Save failed", e);
         }
+    }
+
+    private void updateStats(String bucket) {
+        if (!Boolean.getBoolean("update.stats")) return;
+
+        Path statsDir = getStatsDir();
+        Path statsFile = statsDir.resolve(bucket + ".json");
+
+        try {
+            if (Files.notExists(statsDir)) {
+                Files.createDirectories(statsDir);
+            }
+
+            JSONObject statsJson = getStatsJson(statsFile);
+            updateCounter(statsJson);
+            safeSaving(statsFile, statsJson);
+
+        } catch (IOException e) {
+            System.err.println("Stats error for " + getName() + " [" + bucket + "]: " + e.getMessage());
+        }
+    }
+
+    private Path getStatsDir() {
+        // storage/en/--stats/de/A.json
+        return dictionaryPath.getParent().resolve("--stats").resolve(getName());
+    }
+
+    private JSONObject getStatsJson(Path statsFile) throws IOException {
+        JSONObject statsJson;
+        if (Files.exists(statsFile)) {
+            statsJson = new JSONObject(Files.readString(statsFile, StandardCharsets.UTF_8));
+        } else {
+            statsJson = new JSONObject();
+            statsJson.put("total_words", 0);
+        }
+        return statsJson;
+    }
+
+    private void updateCounter(JSONObject statsJson) {
+        statsJson.put("total_words", statsJson.getInt("total_words") + 1);
+        statsJson.put("last_updated", LocalDateTime.now().toString());
+    }
+
+    private void safeSaving(Path statsFile, JSONObject statsJson) throws IOException {
+        Path tempFile = statsFile.getParent().resolve(statsFile.getFileName().toString() + ".tmp");
+        System.out.println(tempFile);
+        // Атомарний запис
+        Files.writeString(tempFile, statsJson.toString(2), StandardCharsets.UTF_8);
+        Files.move(tempFile, statsFile,
+                   StandardCopyOption.REPLACE_EXISTING,
+                   StandardCopyOption.ATOMIC_MOVE);
     }
 }
