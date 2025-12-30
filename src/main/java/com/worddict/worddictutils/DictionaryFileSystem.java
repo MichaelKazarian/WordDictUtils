@@ -10,7 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-
+import java.util.stream.Stream;
 import java.time.LocalDateTime;
 
 public class DictionaryFileSystem extends Dictionary {
@@ -63,6 +63,35 @@ public class DictionaryFileSystem extends Dictionary {
 
         } catch (IOException e) {
             System.err.println("Stats error for " + getName() + " [" + bucket + "]: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public int wordsCount() {
+        Path statsDir = getStatsDir();
+        if (Files.notExists(statsDir)) {
+            return 0;
+        }
+
+        try (Stream<Path> files = Files.list(statsDir)) {
+            return files
+                .filter(path -> path.toString().endsWith(".json"))
+                // Читаємо кожен файл статистики та витягуємо total_words
+                .mapToInt(this::readCountFromFile)
+                .sum();
+        } catch (IOException e) {
+            System.err.println("Error calculating words count: " + e.getMessage());
+            return 0;
+        }
+    }
+
+    private int readCountFromFile(Path statsFile) {
+        try {
+            String content = Files.readString(statsFile, StandardCharsets.UTF_8);
+            JSONObject json = new JSONObject(content);
+            return json.optInt("total_words", 0);
+        } catch (IOException e) {
+            return 0;
         }
     }
 
