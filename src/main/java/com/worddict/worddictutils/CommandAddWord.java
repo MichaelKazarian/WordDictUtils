@@ -38,7 +38,7 @@ public class CommandAddWord implements Callable<Integer> {
     @Option(names = "-ex", split = "===", description = "Global word samples")
     private List<String> globalExamples;
 
-    @Option(names = "-s", split = "===", description = "Audio files to copy to --sounds")
+    @Option(names = "-s", description = "Add audio: 'path === comment === url'")
     private List<String> audioFiles;
 
     @Option(names = "-t", description = "Translation block: 'trn===ex1===ex2' (samples tied to translation)")
@@ -104,25 +104,40 @@ public class CommandAddWord implements Callable<Integer> {
             }
         }
 
-        // 3. Обробка звуку (Копіювання файлів)
+        // 3. Обробка звуку (Копіювання файлів та розбір метаданих)
         if (audioFiles != null) {
             Path soundsTargetDir = blfs.getLanguageRootPath().resolve("--sounds");
-            
-            for (String audioPathStr : audioFiles) {
-                Path sourceFile = Path.of(audioPathStr);
+            System.out.println(audioFiles);
+            for (String rawAudio : audioFiles) {
+                // Розбиваємо кожен окремий -s на частини
+                String[] parts = rawAudio.split("===");
+                Path sourceFile = Path.of(parts[0].trim());
+
                 if (Files.exists(sourceFile)) {
                     String fileName = sourceFile.getFileName().toString();
                     Path targetFile = soundsTargetDir.resolve(fileName);
-                    
-                    // Копіюємо файл фізично
+
+                    // 1. Фізичне копіювання у спільну папку мови
                     Files.copy(sourceFile, targetFile, StandardCopyOption.REPLACE_EXISTING);
+
+                    // 2. Створення об'єкта AudioSample (ID - це ім'я файлу без розширення)
+                    String nameId = fileName.replaceFirst("[.][^.]+$", "");
+                    AudioSample as = new AudioSample(nameId);
                     
-                    // Створюємо AudioSample об'єкт для Word
-                    AudioSample as = new AudioSample(fileName.replaceFirst("[.][^.]+$", "")); // ім'я без розширення
+                    // Встановлюємо посилання на скопійований файл
                     as.setFile(targetFile.toFile());
+
+                    // 3. Заповнюємо додаткові поля, якщо вони передані через ===
+                    if (parts.length > 1) {
+                        as.setComment(parts[1].trim()); // Коментар (напр. Audio (US))
+                    }
+                    if (parts.length > 2) {
+                        as.setUrl(parts[2].trim());    // Посилання на джерело
+                    }
+
                     word.getAudioSamples().add(as);
                 } else {
-                    System.err.println("Warning: Audio file not found: " + audioPathStr);
+                    System.err.println("Warning: Audio file not found: " + sourceFile);
                 }
             }
         }
