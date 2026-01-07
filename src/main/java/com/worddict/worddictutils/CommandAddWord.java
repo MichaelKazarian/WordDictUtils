@@ -82,9 +82,11 @@ public class CommandAddWord implements Callable<Integer> {
         
         // Глобальні приклади (SAMPLE_LIST)
         if (globalExamples != null) {
-            SamplesList sl = word.getSamplesList();
             for (String ex : globalExamples) {
-                sl.add(ex);
+                String trimmed = ex.trim();
+                if (!trimmed.isEmpty()) {
+                    word.getSamplesList().add(trimmed);
+                }
             }
         }
 

@@ -242,7 +242,7 @@ make create-dict-args ARGS="dict-path en es"
 make create-dict-args ARGS="dict-path en es -n 'test dict'"
 make list-dicts-args ARGS="my-dict"
 make list-dicts-args ARGS="my-dict -s en"
-make add-word ARGS="my-dict en de apple -i ˈæpl -t 'Apfel === Der Apfel ist rot. === Äpfel sind gesund.' -t 'Pippin === Pippin ist eine Apfelsorte.' -ex 'An apple a day keeps the doctor away. === Eat more apples.' -n 'Note test' -s '/home/kazarian/Музика/8. Steer Your Way.mp3 === ʼ/home/kazarian/Музика/Lil Jon – Barstarzz.mp3'"
+make add-word ARGS="my-dict en de apple -i ˈæpl -t 'Apfel === Der Apfel ist rot. === Äpfel sind gesund.' -t 'Pippin === Pippin ist eine Apfelsorte.' -ex 'An apple a day keeps the doctor away.' -ex 'Eat more apples.' -n 'Note test' -s '/home/kazarian/Музика/8. Steer Your Way.mp3 === ʼ/home/kazarian/Музика/Lil Jon – Barstarzz.mp3'"
 make add-word ARGS="my-dict en uk 'a lot' \
   -i 'əˈlɒt === UK' \
   -i 'əˈlɑt === US' \
@@ -261,5 +261,9 @@ make add-word ARGS="my-dict en uk 'a lot' \
   -s '/home/kazarian/Музика/Добрий Пастир та Блаженства(1).m4a === Audio (US)' \
   -s '/home/kazarian/Музика/Lil Jon – Barstarzz.mp3 === Audio (UK) === https://wikipedia.org' \
   -n 'Some note'"
+make add-word ARGS="my-dict en uk apple \
+  -ex 'An apple a day keeps the doctor away.' \
+  -ex 'The forbidden fruit is always the sweetest.' \
+  -t 'яблуко'"
 #+END_SRC
 
