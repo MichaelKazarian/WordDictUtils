@@ -240,5 +240,8 @@ junit:junit
 make create-dict DICTDIR=my-dict SRC=en TARGET=uk
 make create-dict-args ARGS="dict-path en es"
 make create-dict-args ARGS="dict-path en es -n 'test dict'"
+make list-dicts-args ARGS="my-dict"
+make list-dicts-args ARGS="my-dict -s en"
+make add-word ARGS="my-dict en de apple -i ˈæpl -t 'Apfel === Der Apfel ist rot. === Äpfel sind gesund.' -t 'Pippin === Pippin ist eine Apfelsorte.' -ex 'An apple a day keeps the doctor away. === Eat more apples.' -n 'Note test' -s '/home/kazarian/Музика/8. Steer Your Way.mp3 === ʼ/home/kazarian/Музика/Lil Jon – Barstarzz.mp3'"
 #+END_SRC
 

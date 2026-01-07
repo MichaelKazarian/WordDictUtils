@@ -1,7 +1,10 @@
 package com.worddict.worddictutils;
 
+import com.worddict.worddictcore.AudioSample;
 import com.worddict.worddictcore.Language;
 import com.worddict.worddictcore.Translation;
+import com.worddict.worddictcore.Pronounce;
+import com.worddict.worddictcore.SamplesList;
 import com.worddict.worddictcore.Word;
 import picocli.CommandLine.*;
 
@@ -26,46 +29,65 @@ public class CommandAddWord implements Callable<Integer> {
     @Parameters(index = "3", description = "The word to add")
     private String wordText;
 
-    @Option(names = {"-i", "--ipa"}, description = "Transcription")
+    @Option(names = {"-i", "--ipa"}, description = "Transcription (IPA)")
     private String ipa;
 
-    @Option(names = "-n", description = "Global note")
+    @Option(names = "-n", description = "General word note")
     private String note;
 
-    @Option(names = "-ex", split = ";!;", description = "Global examples")
+    @Option(names = "-ex", split = "===", description = "Global word samples")
     private List<String> globalExamples;
 
-    @Option(names = "-s", split = ";!;", description = "Audio files to copy")
+    @Option(names = "-s", split = "===", description = "Audio files to copy to --sounds")
     private List<String> audioFiles;
 
-    @Option(names = "-t", description = "Translation block: 'trn;!;ex1;!;ex2'")
+    @Option(names = "-t", description = "Translation block: 'trn===ex1===ex2' (samples tied to translation)")
     private List<String> rawTranslations;
 
     @Override
     public Integer call() throws Exception {
-        // 1. Ініціалізація оточення
+        // 1. Ініціалізація
         Language srcLang = Language.getLanguageByCode(srcCode);
         Language targetLang = Language.getLanguageByCode(targetCode);
+        
+        // Використовуємо BaseLanguageFileSystem для управління ієрархією
         BaseLanguageFileSystem blfs = new BaseLanguageFileSystem(srcLang, dictDir);
         
         // Отримуємо або створюємо словник
         Dictionary dict = blfs.getOrCreateDictionary(targetLang, "");
+
         // 2. Створення та наповнення об'єкта Word
         Word word = new Word(wordText);
-        // if (ipa != null) word.getPronounce().addPronounce(ipa); // Використовуємо ядро WordDictCore
-        // if (note != null) word.setNote(note);
         
-        // Глобальні приклади
+        // IPA Pronunciation (згідно з WordTest/getOther)
+        if (ipa != null) {
+            Pronounce.TextPronounce tp = new Pronounce.TextPronounce(ipa);
+            Pronounce p = new Pronounce();
+            p.addTextPronounce(tp);
+            word.setPronounce(p);
+        }
+        
+        // Нотатка до слова
+        if (note != null) {
+            word.setNote(note);
+        }
+        
+        // Глобальні приклади (SAMPLE_LIST)
         if (globalExamples != null) {
-            // word.getSamplesList().addAll(globalExamples);
+            SamplesList sl = word.getSamplesList();
+            for (String ex : globalExamples) {
+                sl.add(ex);
+            }
         }
 
-        // Обробка перекладів
+        // Обробка перекладів та їхніх ПРИВ'ЯЗАНИХ прикладів
         if (rawTranslations != null) {
             for (String raw : rawTranslations) {
-                String[] parts = raw.split(";!;");
+                String[] parts = raw.split("===");
                 if (parts.length > 0) {
+                    // Перша частина - сам переклад
                     Translation tr = new Translation(parts[0]);
+                    // Наступні частини - приклади саме для ЦЬОГО перекладу
                     for (int i = 1; i < parts.length; i++) {
                         tr.addSample(parts[i]);
                     }
@@ -77,27 +99,27 @@ public class CommandAddWord implements Callable<Integer> {
         // 3. Обробка звуку (Копіювання файлів)
         if (audioFiles != null) {
             Path soundsTargetDir = blfs.getLanguageRootPath().resolve("--sounds");
+            
             for (String audioPathStr : audioFiles) {
                 Path sourceFile = Path.of(audioPathStr);
                 if (Files.exists(sourceFile)) {
                     String fileName = sourceFile.getFileName().toString();
                     Path targetFile = soundsTargetDir.resolve(fileName);
                     
-                    // Копіюємо, якщо файлу ще немає
-                    if (Files.notExists(targetFile)) {
-                        Files.copy(sourceFile, targetFile, StandardCopyOption.REPLACE_EXISTING);
-                    }
+                    // Копіюємо файл фізично
+                    Files.copy(sourceFile, targetFile, StandardCopyOption.REPLACE_EXISTING);
                     
-                    // У Word записуємо тільки ім'я файлу (це зафіксовано в ТЗ)
-                    // word.getAudioSamples().add(new AudioSample(fileName)); 
-                    // Примітка: Додай AudioSample відповідно до твого ядра
+                    // Створюємо AudioSample об'єкт для Word
+                    AudioSample as = new AudioSample(fileName.replaceFirst("[.][^.]+$", "")); // ім'я без розширення
+                    as.setFile(targetFile.toFile());
+                    word.getAudioSamples().add(as);
                 } else {
                     System.err.println("Warning: Audio file not found: " + audioPathStr);
                 }
             }
         }
 
-        // 4. ЗБЕРЕЖЕННЯ
+        // 4. Збереження через Dictionary (з врахуванням бакетів A, T, U...)
         dict.saveWord(word);
 
         System.out.printf("Successfully saved '%s' to %s/%s\n", wordText, srcCode, dict.getName());
