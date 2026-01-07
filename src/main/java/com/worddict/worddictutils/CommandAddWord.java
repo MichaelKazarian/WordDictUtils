@@ -29,8 +29,8 @@ public class CommandAddWord implements Callable<Integer> {
     @Parameters(index = "3", description = "The word to add")
     private String wordText;
 
-    @Option(names = {"-i", "--ipa"}, description = "Transcription (IPA)")
-    private String ipa;
+    @Option(names = {"-i", "--ipa"}, description = "Transcription: 'ipa === memo'")
+    private List<String> ipaList;
 
     @Option(names = "-n", description = "General word note")
     private String note;
@@ -60,10 +60,18 @@ public class CommandAddWord implements Callable<Integer> {
         Word word = new Word(wordText);
         
         // IPA Pronunciation (згідно з WordTest/getOther)
-        if (ipa != null) {
-            Pronounce.TextPronounce tp = new Pronounce.TextPronounce(ipa);
+        if (ipaList != null) {
             Pronounce p = new Pronounce();
-            p.addTextPronounce(tp);
+            for (String rawIpa : ipaList) {
+                String[] parts = rawIpa.split("===");
+                String ipaValue = parts[0].trim();
+                Pronounce.TextPronounce tp = new Pronounce.TextPronounce(ipaValue);
+                // Якщо є коментар (memo) після ===
+                if (parts.length > 1) {
+                    tp.setMemo(parts[1].trim());
+                }
+                p.addTextPronounce(tp);
+            }
             word.setPronounce(p);
         }
         
