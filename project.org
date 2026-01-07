@@ -50,6 +50,11 @@
 #+BEGIN_SRC
 dictionaries/                           ← глобальний корінь
 ├── en/                                 ← BaseLanguage = "en"
+|   ├── --stats                         ← Статистика
+│   │   ├── de                          ← по мовам
+│   │   ├───── A.json
+│   │   └───── Z.json
+|   ├── --sounds/                       ← Аудіо спільне для всіх словників базової мови
 │   ├── uk/                             ← стандартний словник en→uk (без власної назви)
 │   │   ├── description.json
 │   │   ├── words/
@@ -108,6 +113,8 @@ com.worddict.worddictutils.Dictionary
    - Додавання та видалення аудіо до слова.
    - Пошук слова використовуючи com.worddict.wiktionarybot
    - Оперує екземплярами com.worddict.worddictcore.Word
+com.worddict.worddictutils.DictionaryFileSystem extends Dictionary
+ - Реалізує Dictionary на базі файлової системи.
 
 *** CLI Модуль add-word
 Реалізувати консольну команду для створення або повного перезапису файлу слова у форматі JSON.
@@ -173,9 +180,6 @@ worddict add-word ./storage en uk "spring" \
 **** ПИТАННЯ ДЛЯ УТОЧНЕННЯ (Pending)
 - [ ] Як обробляти ситуацію, коли копіювання файлу не вдалося (права доступу)?
 - [ ] Чи потрібно валідувати, що файл за шляхом =-s= є саме аудіо-форматом?
-
-**** Класи, яких ще немає (плануються)
- - com.worddict.worddictutils.DictionaryFileSystem extends Dictionary
 
 ** Технічні деталі
 *** Залежності
