@@ -1,13 +1,9 @@
 package com.worddict.worddictutils;
 
-import com.worddict.worddictcore.AudioSample;
-import com.worddict.worddictcore.Language;
-import com.worddict.worddictcore.Translation;
-import com.worddict.worddictcore.Pronounce;
-import com.worddict.worddictcore.SamplesList;
-import com.worddict.worddictcore.Word;
+import com.worddict.worddictcore.*;
 import picocli.CommandLine.*;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -35,7 +31,7 @@ public class CommandAddWord implements Callable<Integer> {
     @Option(names = "-n", description = "General word note")
     private String note;
 
-    @Option(names = "-ex", split = "===", description = "Global word samples")
+    @Option(names = "-ex", description = "Global word samples")
     private List<String> globalExamples;
 
     @Option(names = "-s", description = "Add audio: 'path === comment === url'")
@@ -46,108 +42,106 @@ public class CommandAddWord implements Callable<Integer> {
 
     @Override
     public Integer call() throws Exception {
-        // 1. Ініціалізація
+        // 1. Ініціалізація доменних об'єктів
         Language srcLang = Language.getLanguageByCode(srcCode);
         Language targetLang = Language.getLanguageByCode(targetCode);
-        
-        // Використовуємо BaseLanguageFileSystem для управління ієрархією
         BaseLanguageFileSystem blfs = new BaseLanguageFileSystem(srcLang, dictDir);
-        
-        // Отримуємо або створюємо словник
         Dictionary dict = blfs.getOrCreateDictionary(targetLang, "");
 
-        // 2. Створення та наповнення об'єкта Word
+        // 2. Створення та наповнення Word
         Word word = new Word(wordText);
+        applyPronunciations(word);
+        applyNote(word);
+        applyGlobalExamples(word);
+        applyTranslations(word);
+        processAudioFiles(word, blfs.getLanguageRootPath().resolve("--sounds"));
+
+        dict.saveWord(word);
+        System.out.printf("Successfully saved '%s' to %s/%s\n", wordText, srcCode, dict.getName());
+        return 0;
+    }
+
+    private void applyPronunciations(Word word) {
+        if (ipaList == null) return;
         
-        // IPA Pronunciation (згідно з WordTest/getOther)
-        if (ipaList != null) {
-            Pronounce p = new Pronounce();
-            for (String rawIpa : ipaList) {
-                String[] parts = rawIpa.split("===");
-                String ipaValue = parts[0].trim();
-                Pronounce.TextPronounce tp = new Pronounce.TextPronounce(ipaValue);
-                // Якщо є коментар (memo) після ===
-                if (parts.length > 1) {
-                    tp.setMemo(parts[1].trim());
-                }
-                p.addTextPronounce(tp);
+        Pronounce p = new Pronounce();
+        for (String raw : ipaList) {
+            String[] parts = raw.split("===");
+            Pronounce.TextPronounce tp = new Pronounce.TextPronounce(parts[0].trim());
+            if (parts.length > 1) {
+                tp.setMemo(parts[1].trim());
             }
-            word.setPronounce(p);
+            p.addTextPronounce(tp);
         }
-        
-        // Нотатка до слова
+        word.setPronounce(p);
+    }
+
+    private void applyNote(Word word) {
         if (note != null) {
             word.setNote(note);
         }
+    }
+
+    private void applyGlobalExamples(Word word) {
+        if (globalExamples == null) return;
         
-        // Глобальні приклади (SAMPLE_LIST)
-        if (globalExamples != null) {
-            for (String ex : globalExamples) {
-                String trimmed = ex.trim();
-                if (!trimmed.isEmpty()) {
-                    word.getSamplesList().add(trimmed);
-                }
+        for (String ex : globalExamples) {
+            String trimmed = ex.trim();
+            if (!trimmed.isEmpty()) {
+                word.getSamplesList().add(trimmed);
             }
         }
+    }
 
-        // Обробка перекладів та їхніх ПРИВ'ЯЗАНИХ прикладів
-        if (rawTranslations != null) {
-            for (String raw : rawTranslations) {
-                String[] parts = raw.split("===");
-                if (parts.length > 0) {
-                    // Перша частина - сам переклад
-                    Translation tr = new Translation(parts[0]);
-                    // Наступні частини - приклади саме для ЦЬОГО перекладу
-                    for (int i = 1; i < parts.length; i++) {
-                        tr.addSample(parts[i]);
-                    }
-                    word.addTranslation(tr);
+    private void applyTranslations(Word word) {
+        if (rawTranslations == null) return;
+
+        for (String raw : rawTranslations) {
+            String[] parts = raw.split("===");
+            if (parts.length > 0) {
+                Translation tr = new Translation(parts[0].trim());
+                for (int i = 1; i < parts.length; i++) {
+                    tr.addSample(parts[i].trim());
                 }
+                word.addTranslation(tr);
             }
         }
+    }
 
-        // 3. Обробка звуку (Копіювання файлів та розбір метаданих)
-        if (audioFiles != null) {
-            Path soundsTargetDir = blfs.getLanguageRootPath().resolve("--sounds");
-            System.out.println(audioFiles);
-            for (String rawAudio : audioFiles) {
-                // Розбиваємо кожен окремий -s на частини
-                String[] parts = rawAudio.split("===");
-                Path sourceFile = Path.of(parts[0].trim());
+    private void processAudioFiles(Word word, Path soundsTargetDir) throws IOException {
+        if (audioFiles == null) return;
 
-                if (Files.exists(sourceFile)) {
-                    String fileName = sourceFile.getFileName().toString();
-                    Path targetFile = soundsTargetDir.resolve(fileName);
-
-                    // 1. Фізичне копіювання у спільну папку мови
-                    Files.copy(sourceFile, targetFile, StandardCopyOption.REPLACE_EXISTING);
-
-                    // 2. Створення об'єкта AudioSample (ID - це ім'я файлу без розширення)
-                    String nameId = fileName.replaceFirst("[.][^.]+$", "");
-                    AudioSample as = new AudioSample(nameId);
-                    
-                    // Встановлюємо посилання на скопійований файл
-                    as.setFile(targetFile.toFile());
-
-                    // 3. Заповнюємо додаткові поля, якщо вони передані через ===
-                    if (parts.length > 1) {
-                        as.setComment(parts[1].trim()); // Коментар (напр. Audio (US))
-                    }
-                    if (parts.length > 2) {
-                        as.setUrl(parts[2].trim());    // Посилання на джерело
-                    }
-
-                    word.getAudioSamples().add(as);
-                } else {
-                    System.err.println("Warning: Audio file not found: " + sourceFile);
-                }
-            }
+        // Перевіряємо/створюємо папку звуків один раз
+        if (Files.notExists(soundsTargetDir)) {
+            Files.createDirectories(soundsTargetDir);
         }
 
-        // 4. Збереження через Dictionary (з врахуванням бакетів A, T, U...)
-        dict.saveWord(word);
+        for (String raw : audioFiles) {
+            String[] parts = raw.split("===");
+            Path sourceFile = Path.of(parts[0].trim());
 
-        System.out.printf("Successfully saved '%s' to %s/%s\n", wordText, srcCode, dict.getName());
-        return 0;
+            if (Files.exists(sourceFile)) {
+                String fileName = sourceFile.getFileName().toString();
+                Path targetFile = soundsTargetDir.resolve(fileName);
+
+                Files.copy(sourceFile, targetFile, StandardCopyOption.REPLACE_EXISTING);
+
+                AudioSample as = createAudioSample(fileName, targetFile, parts);
+                word.getAudioSamples().add(as);
+            } else {
+                System.err.println("Warning: Audio file not found: " + sourceFile);
+            }
+        }
+    }
+
+    private AudioSample createAudioSample(String fileName, Path targetFile, String[] parts) {
+        String nameId = fileName.replaceFirst("[.][^.]+$", "");
+        AudioSample as = new AudioSample(nameId);
+        as.setFile(targetFile.toFile());
+
+        if (parts.length > 1) as.setComment(parts[1].trim());
+        if (parts.length > 2) as.setUrl(parts[2].trim());
+        
+        return as;
     }
 }
