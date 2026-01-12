@@ -45,12 +45,15 @@ create-dict-args: $(JAR_FILE)
 list-dicts: $(JAR_FILE)
 	@java -jar $(JAR_FILE) list-dicts $(DICTDIR) $(SRC)
 
-#make list-dicts-args ARGS="my-dict"
+#make list-dicts-args ARGS="my-dict -s en"
 list-dicts-args: $(JAR_FILE)
 	@java -jar $(JAR_FILE) list-dicts $(ARGS)
 
 add-word: $(JAR_FILE)
 	@java -Dupdate.stats=true -jar $(JAR_FILE) add-word $(ARGS)
+
+remove-word: $(JAR_FILE)
+	@java -Dupdate.stats=true -jar $(JAR_FILE) remove-word $(ARGS)
 
 test:
 	@mvn -q test

@@ -40,13 +40,34 @@ public class DictionaryFileSystem extends Dictionary {
             if (Files.notExists(subDir)) Files.createDirectories(subDir);
             boolean isNewWord = Files.notExists(filePath);
             Files.writeString(filePath, word.toJsonObject().toString(2), StandardCharsets.UTF_8);
-            if (isNewWord) updateStats(bucket);
+            if (isNewWord) updateStats(bucket, 1);
         } catch (IOException e) {
             throw new RuntimeException("Save failed", e);
         }
     }
 
-    private void updateStats(String bucket) {
+    public boolean deleteWord(String wordText) {
+        String fileName = strategy.getFileName(wordText);
+        if (fileName.isEmpty()) return false;
+
+        String bucket = strategy.getBucket(fileName);
+        Path filePath = dictionaryPath.resolve(bucket).resolve(fileName + ".json");
+
+        try {
+            if (Files.exists(filePath)) {
+                Files.delete(filePath);
+                
+                updateStats(bucket, -1);
+                cleanUpEmptyBucket(filePath.getParent());
+                return true;
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Delete failed", e);
+        }
+        return false;
+    }
+
+    private void updateStats(String bucket, int delta) {
         if (!Boolean.getBoolean("update.stats")) return;
 
         Path statsDir = getStatsDir();
@@ -58,7 +79,7 @@ public class DictionaryFileSystem extends Dictionary {
             }
 
             JSONObject statsJson = getStatsJson(statsFile);
-            updateCounter(statsJson);
+            updateCounter(statsJson, delta);
             safeSaving(statsFile, statsJson);
 
         } catch (IOException e) {
@@ -111,9 +132,18 @@ public class DictionaryFileSystem extends Dictionary {
         return statsJson;
     }
 
-    private void updateCounter(JSONObject statsJson) {
-        statsJson.put("total_words", statsJson.getInt("total_words") + 1);
+    private void updateCounter(JSONObject statsJson, int delta) {
+        int newCount = statsJson.optInt("total_words", 0) + delta;
+        statsJson.put("total_words", Math.max(0, newCount));
         statsJson.put("last_updated", LocalDateTime.now().toString());
+    }
+
+    private void cleanUpEmptyBucket(Path bucketDir) {
+        try (Stream<Path> s = Files.list(bucketDir)) {
+            if (!s.findAny().isPresent()) {
+                Files.delete(bucketDir);
+            }
+        } catch (IOException ignored) {}
     }
 
     private void safeSaving(Path statsFile, JSONObject statsJson) throws IOException {

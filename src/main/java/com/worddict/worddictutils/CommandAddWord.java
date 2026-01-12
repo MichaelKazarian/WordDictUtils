@@ -42,13 +42,11 @@ public class CommandAddWord implements Callable<Integer> {
 
     @Override
     public Integer call() throws Exception {
-        // 1. Ініціалізація доменних об'єктів
         Language srcLang = Language.getLanguageByCode(srcCode);
         Language targetLang = Language.getLanguageByCode(targetCode);
         BaseLanguageFileSystem blfs = new BaseLanguageFileSystem(srcLang, dictDir);
         Dictionary dict = blfs.getOrCreateDictionary(targetLang, "");
 
-        // 2. Створення та наповнення Word
         Word word = new Word(wordText);
         applyPronunciations(word);
         applyNote(word);
