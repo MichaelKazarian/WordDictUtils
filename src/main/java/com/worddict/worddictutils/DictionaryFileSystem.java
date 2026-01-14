@@ -10,6 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.List;
 import java.util.stream.Stream;
 import java.time.LocalDateTime;
 
@@ -103,6 +104,62 @@ public class DictionaryFileSystem extends Dictionary {
         } catch (IOException e) {
             System.err.println("Error calculating words count: " + e.getMessage());
             return 0;
+        }
+    }
+
+    /**
+     * Lists words using an optimized bucket search based on the prefix.
+     * If no prefix is provided, it calls {@link #listAllWords()} for a full scan.
+     *
+     * @param prefix Optional prefix to filter the results (case-insensitive).
+     * @return A sorted list of word names.
+     */
+    public List<String> listWords(String prefix) {
+        if (Files.notExists(dictionaryPath)) return List.of();
+        if (prefix == null || prefix.isBlank()) {
+            return listAllWords();
+        }
+
+        String cleanPrefix = prefix.trim().toLowerCase();
+        String bucket = strategy.getBucket(cleanPrefix);
+        Path bucketPath = dictionaryPath.resolve(bucket);
+
+        if (Files.notExists(bucketPath)) return List.of();
+
+        try (Stream<Path> files = Files.list(bucketPath)) {
+            return files
+                .filter(path -> path.toString().endsWith(".json"))
+                .map(path -> path.getFileName().toString().replace(".json", ""))
+                .filter(name -> {
+                        String searchBase = strategy.normalize(name);
+                        return searchBase.startsWith(cleanPrefix);
+                    })
+                .sorted()
+                .toList();
+        } catch (IOException e) {
+            System.err.println("Error reading bucket " + bucket + ": " + e.getMessage());
+            return List.of();
+        }
+    }
+
+    /**
+     * Performs a complete scan of the dictionary structure to find all words.
+     * Searches up to 2 levels deep to cover all alphabet/prefix buckets.
+     *
+     * @return A sorted list of all word names in the dictionary.
+     */
+    public List<String> listAllWords() {
+        if (Files.notExists(dictionaryPath)) return List.of();
+
+        try (Stream<Path> walk = Files.walk(dictionaryPath, 2)) {
+            return walk
+                .filter(path -> path.toString().endsWith(".json"))
+                .map(path -> path.getFileName().toString().replace(".json", ""))
+                .sorted()
+                .toList();
+        } catch (IOException e) {
+            System.err.println("Error scanning all dictionary words: " + e.getMessage());
+            return List.of();
         }
     }
 

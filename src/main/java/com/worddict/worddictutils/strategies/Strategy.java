@@ -4,9 +4,18 @@ import com.worddict.worddictcore.Language;
 import java.text.Normalizer;
 
 public class Strategy {
+    /** Base normalization: trims the string and converts to lower case.
+     * Strategies can override this to add specific rules (like removing accents).
+     */
+    public String normalize(String text) {
+        if (text == null) return "";
+        return text.trim().toLowerCase();
+    }
+
     public String getBucket(String word) {
-        if (word == null || word.isBlank()) return "_";
-        return word.trim().substring(0, 1).toUpperCase();
+        String normalized = normalize(word);
+        if (normalized.isEmpty()) return "_";
+        return normalized.substring(0, 1).toUpperCase();
     }
     
     public static Strategy getStrategy(Language language) {

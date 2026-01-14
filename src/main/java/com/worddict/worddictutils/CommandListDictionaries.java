@@ -7,6 +7,7 @@ import picocli.CommandLine.Option;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Optional;
+import java.util.List;
 
 /**
  * Lists all registered BaseLanguages (source languages) or dictionaries 
@@ -24,32 +25,40 @@ public class CommandListDictionaries implements Runnable {
 
     @Option(
         names = {"-s", "--source"},
-        paramLabel = "SRC",
-        description = "Optional: Source language code to inspect (e.g., 'en'). If specified, lists its dictionaries."
+        paramLabel = "SRC [TARGET]",
+        arity = "1..2", // Дозволяє вказати від 1 до 2 значень (en або en de)
+        description = "Source language and optional target dictionary (e.g. 'en' or 'en de')"
     )
-    private String sourceLangCode;
+    private String[] sourceArgs;
+
+    @Option(
+        names = {"-l", "--lookup"},
+        paramLabel = "PREFIX",
+        description = "Optional: Prefix to filter words (e.g., 'a')."
+    )
+    private String lookupPrefix;
 
     @Override
     public void run() {
         DictionaryManagerFileSystem manager = DictionaryManagerFileSystem.INSTANCE;
         try {
             manager.init(rootDirString);
-            
-            System.out.println("--- WordDict Dictionary List ---");
-            System.out.println("Root Directory: " + manager.getRootDirectory());
-            
-            if (sourceLangCode != null && !sourceLangCode.isBlank()) {
-                listDictionariesForSourceLanguage(manager, sourceLangCode.trim());
-            } else {
+            // System.out.println("--- WordDict Dictionary List ---");
+            // System.out.println("Root Directory: " + manager.getRootDirectory());
+            if (sourceArgs == null || sourceArgs.length == 0) { // 1. -s is empty
                 listAllBaseLanguages(manager);
+                return;
             }
-
-        } catch (IllegalStateException ise) {
-            System.err.println("Manager Error: " + ise.getMessage());
-        } catch (IOException ioe) {
-            System.err.println("Filesystem Error: Could not initialize root directory: " + ioe.getMessage());
+            String src = sourceArgs[0].trim();
+            if (sourceArgs.length == 2) { // 2. source and target (-s en de)
+                String target = sourceArgs[1].trim();
+                listWordsInDictionary(manager, src, target);
+            } 
+            else { // 3. Source only (-s en)
+                listDictionariesForSourceLanguage(manager, src);
+            }
         } catch (Exception e) {
-            System.err.println("An unexpected error occurred: " + e.getMessage());
+            System.err.println("Error: " + e.getMessage());
         }
     }
 
@@ -104,5 +113,29 @@ public class CommandListDictionaries implements Runnable {
              // System.out.println(" - " + dict.getName());
             System.out.println(" - Dictionary: " + dict.getName() + " (Words: "+dict.wordsCount()+ ")");
         }
+    }
+
+    /**
+     * Lists words within a specific dictionary with optional prefix filtering.
+     */
+    private void listWordsInDictionary(DictionaryManager manager, String src, String target) {
+        Optional<BaseLanguage> baseOpt = manager.getBaseLanguage(src);
+        if (baseOpt.isEmpty()) {
+            System.err.println("\nError: Source language '" + src + "' is not registered.");
+            return;
+        }
+
+        Optional<Dictionary> dictOpt = baseOpt.get().listDictionaries().stream()
+                .filter(d -> d.getName().equalsIgnoreCase(target))
+                .findFirst();
+
+        if (dictOpt.isEmpty()) {
+            System.err.println("\nError: Dictionary '" + target + "' not found for language '" + src + "'.");
+            return;
+        }
+
+        DictionaryFileSystem dictFs = (DictionaryFileSystem) dictOpt.get();
+        List<String> words = dictFs.listWords(lookupPrefix);
+        if (!words.isEmpty()) words.forEach(w -> System.out.println(w));
     }
 }

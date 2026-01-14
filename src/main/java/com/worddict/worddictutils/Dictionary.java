@@ -4,6 +4,7 @@ import com.worddict.worddictcore.Language;
 import com.worddict.worddictcore.Word;
 
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -69,6 +70,15 @@ public class Dictionary {
     /** Finds words by prefix (default: empty list). */
     public List<Word> findWords(String prefix) {
         return List.of();
+    }
+
+    /**
+     * List of word names.
+     * @param prefix Optional prefix to filter the results (case-insensitive).
+     * @return A sorted list of word strings.
+     */
+    public List<String> listWords(String prefix) {
+        return new ArrayList<String>();
     }
 
     /** Returns total word count (default: 0). */
