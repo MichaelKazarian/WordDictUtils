@@ -108,21 +108,24 @@ public abstract class BaseLanguage {
     }
 
     /**
-     * Повертає існуючий словник за мовою та додатковим ім'ям.
+     * Retrieves a dictionary by its full name from the registry.
+     *
+     * @param dictName the dictionary identifier (e.g., "uk" or "uk-special")
+     * @return the {@link Dictionary} object associated with the given name
+     * @throws IllegalArgumentException if the dictionary isn't found or is blank.
      */
-    public Optional<Dictionary> getDictionary(Language targetLanguage, String additionalName) {
-        String dictName = getDictionaryName(targetLanguage.getLanguageCode(), additionalName);
-        return Optional.ofNullable(dictionaries.get(dictName));
-    }
-
-    /**
-     * Оновлений getOrCreate: тепер він використовує внутрішню логіку класу.
-     */
-    public Dictionary getOrCreateDictionary(Language targetLanguage, String additionalName) {
-        String dictName = getDictionaryName(targetLanguage.getLanguageCode(), additionalName);
-        if (dictionaries.containsKey(dictName)) {
-            return dictionaries.get(dictName);
+    public Dictionary getDictionary(String dictName) {
+        if (dictName == null || dictName.isBlank()) {
+            throw new IllegalArgumentException("Dictionary name cannot be empty");
         }
-        return createDictionary(targetLanguage, additionalName);
+        String sanitizedName = sanitize(dictName);
+        Dictionary dict = dictionaries.get(sanitizedName);
+
+        if (dict == null) {
+            var m = "Dictionary '" + dictName + "' not found. " +
+                "Please create it first using 'create-dict'.";
+            throw new IllegalArgumentException(m);
+        }
+        return dict;
     }
 }

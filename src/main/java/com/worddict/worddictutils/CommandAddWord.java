@@ -20,7 +20,7 @@ public class CommandAddWord implements Callable<Integer> {
     private String srcCode;
 
     @Parameters(index = "2", description = "Target language code (e.g., uk)")
-    private String targetCode;
+    private String targetDictName;
 
     @Parameters(index = "3", description = "The word to add")
     private String wordText;
@@ -43,10 +43,8 @@ public class CommandAddWord implements Callable<Integer> {
     @Override
     public Integer call() throws Exception {
         Language srcLang = Language.getLanguageByCode(srcCode);
-        Language targetLang = Language.getLanguageByCode(targetCode);
         BaseLanguageFileSystem blfs = new BaseLanguageFileSystem(srcLang, dictDir);
-        Dictionary dict = blfs.getOrCreateDictionary(targetLang, "");
-
+        Dictionary dict = blfs.getDictionary(targetDictName);
         Word word = new Word(wordText);
         applyPronunciations(word);
         applyNote(word);

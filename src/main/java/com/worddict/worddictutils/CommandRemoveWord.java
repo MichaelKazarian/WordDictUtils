@@ -16,31 +16,25 @@ public class CommandRemoveWord implements Callable<Integer> {
     private String srcCode;
 
     @Parameters(index = "2", description = "Target language code (e.g., uk)")
-    private String targetCode;
+    private String targetDictName;
 
     @Parameters(index = "3", description = "The word to remove")
     private String wordText;
 
     @Override
     public Integer call() throws Exception {
-        // 1. Ініціалізація мов та файлової системи
         Language srcLang = Language.getLanguageByCode(srcCode);
-        Language targetLang = Language.getLanguageByCode(targetCode);
-        
         BaseLanguageFileSystem blfs = new BaseLanguageFileSystem(srcLang, dictDir);
         
-        // 2. Отримуємо словник
-        // Використовуємо DictionaryFileSystem, щоб мати доступ до deleteWord
-        DictionaryFileSystem dict = (DictionaryFileSystem) blfs.getOrCreateDictionary(targetLang, "");
+        DictionaryFileSystem dict = (DictionaryFileSystem) blfs.getDictionary(targetDictName);
 
-        // 3. Спроба видалення
         if (dict.deleteWord(wordText)) {
             System.out.printf("Successfully removed '%s' from %s/%s\n", 
-                              wordText, srcCode, targetLang.getLanguageCode());
+                              wordText, srcCode, targetDictName);
             return 0;
         } else {
             System.err.printf("Error: Word '%s' not found in %s/%s\n", 
-                              wordText, srcCode, targetLang.getLanguageCode());
+                              wordText, srcCode, targetDictName);
             return 1;
         }
     }
