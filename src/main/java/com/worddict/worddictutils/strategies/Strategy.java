@@ -9,7 +9,7 @@ public class Strategy {
      */
     public String normalize(String text) {
         if (text == null) return "";
-        return text.trim().toLowerCase();
+        return text.trim();
     }
 
     public String getBucket(String word) {
