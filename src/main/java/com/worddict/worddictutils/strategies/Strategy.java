@@ -30,4 +30,12 @@ public class Strategy {
     public String getFileName(String word) {
         return word.trim().toLowerCase();
     }
+
+    /**
+     * Indicates that the strategy is case-insensitive by default.
+     * Matches will ignore the difference between uppercase and lowercase letters.
+     */
+    public boolean isCaseInsensitive() {
+        return true;
+    }
 }

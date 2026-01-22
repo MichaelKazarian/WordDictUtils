@@ -7,4 +7,12 @@ public class CaseSensitiveLatinStrategy extends LatinStrategy {
         System.out.println(word);
          return word.trim();
     }
+
+    /**
+     * Indicates that the strategy is case-sensitive.
+     * Distinguishes between uppercase and lowercase letters during lookups.
+     */
+    public boolean isCaseInsensitive() {
+        return false;
+    }
 } 
