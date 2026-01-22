@@ -143,10 +143,7 @@ public class BaseLanguageFileSystem extends BaseLanguage {
                         if (dictName.length() > 2 && dictName.charAt(2) == '-') {
                             additionalName = dictName.substring(3); // Всі символи після першого дефісу
                         }
-                        
                         Language targetLang = Language.getLanguageByCode(targetCode);
-                        
-                        // 5. Створення об'єкта (використовуємо заглушку Dictionary з оновленим конструктором)
                         Dictionary dict = new DictionaryFileSystem(this, targetLang, additionalName); 
                         loadedDicts.put(dictName, dict);
                          

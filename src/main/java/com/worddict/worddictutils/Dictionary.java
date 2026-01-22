@@ -1,5 +1,6 @@
 package com.worddict.worddictutils;
 
+import com.worddict.worddictutils.strategies.*;
 import com.worddict.worddictcore.Language;
 import com.worddict.worddictcore.Word;
 
@@ -13,21 +14,24 @@ import java.util.Optional;
  * Provides minimal default implementations; subclasses must override for storage backends.
  */
 public class Dictionary {
-
     protected final Language targetLanguage;
+    protected final Strategy strategy;
+    protected final BaseLanguage parentLanguage;
     protected String additionalName;
 
     /** Creates a dictionary for a language pair. */
-    public Dictionary(Language sourceLanguage, Language targetLanguage) {
-        this(sourceLanguage, targetLanguage, "");
+    public Dictionary(BaseLanguage parent, Language targetLanguage) {
+        this(parent, targetLanguage, "");
     }
 
-    public Dictionary(Language sourceLanguage, Language targetLanguage, String additionalName) {
+    public Dictionary(BaseLanguage parent, Language targetLanguage, String additionalName) {
         this.targetLanguage = Objects.requireNonNull(targetLanguage);
-        if (sourceLanguage.equals(targetLanguage)) {
+        parentLanguage = parent;
+        if (parentLanguage.getLanguage().equals(targetLanguage)) {
             throw new IllegalArgumentException("Source and target languages must differ");
         }
         this.additionalName = additionalName;
+        this.strategy = parentLanguage.getStrategy();
     }
 
     /** Returns the target language. */

@@ -18,13 +18,11 @@ public class DictionaryFileSystem extends Dictionary {
 
     private final BaseLanguageFileSystem parentLanguage;
     private final Path dictionaryPath;
-    private final Strategy strategy;
 
     public DictionaryFileSystem(BaseLanguageFileSystem parent, Language targetLanguage, String additionalName) {
-        super(parent.getLanguage(), targetLanguage, additionalName);
+        super(parent, targetLanguage, additionalName);
         this.parentLanguage = parent;
         this.dictionaryPath = parent.getDictionaryPath(this.getName());
-        this.strategy = Strategy.getStrategy(targetLanguage);
     }
 
     @Override

@@ -1,8 +1,10 @@
 package com.worddict.worddictutils;
 
+import com.worddict.worddictutils.strategies.*;
+import com.worddict.worddictcore.Language;
+
 import java.util.*;
 import java.io.IOException;
-import com.worddict.worddictcore.Language;
 
 /**
  * Manages all dictionaries that use the same source language.
@@ -13,15 +15,22 @@ import com.worddict.worddictcore.Language;
 public abstract class BaseLanguage {
     /** The source language */
     protected final Language language;
+    private final Strategy strategy;
     protected final Map<String, Dictionary> dictionaries = new HashMap<>();
 
     protected BaseLanguage(Language language) {
         this.language = Objects.requireNonNull(language);
+        this.strategy = Strategy.getStrategy(this.language);
     }
 
     /** Returns the source language */
     public Language getLanguage() {
         return language;
+    }
+
+    /** Returns the source language */
+    public Strategy getStrategy() {
+        return strategy;
     }
 
     /**
