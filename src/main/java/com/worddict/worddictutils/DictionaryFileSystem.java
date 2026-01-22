@@ -1,6 +1,5 @@
 package com.worddict.worddictutils;
 
-import com.worddict.worddictutils.strategies.*;
 import com.worddict.worddictcore.Language;
 import com.worddict.worddictcore.Word;
 import org.json.JSONObject;
@@ -106,34 +105,60 @@ public class DictionaryFileSystem extends Dictionary {
     }
 
     /**
-     * Lists words using an optimized bucket search based on the prefix.
-     * If no prefix is provided, it calls {@link #listAllWords()} for a full scan.
+     * Lists words with default settings: a limit of 10 results and case sensitivity 
+     * defined by the specific language strategy.
      *
-     * @param prefix Optional prefix to filter the results (case-insensitive).
-     * @return A sorted list of word names.
+     * @param prefix optional prefix to filter the results
+     * @return a sorted list of up to 10 word names
+     * @see Strategy#isCaseInsensitive()
+     * @see #listWords(String, int, boolean)
      */
     public List<String> listWords(String prefix) {
+        return listWords(prefix, 10, strategy.isCaseInsensitive());
+    }
+
+    /**
+     * Lists words using an optimized bucket search based on the prefix.
+     * <p>
+     * The method uses the strategy's bucket system to narrow down the search to a specific 
+     * directory, then filters files by prefix. If {@code ignoreCase} is true, the search 
+     * is case-insensitive, but the resulting list preserves the original file casing.
+     * </p>
+     *
+     * @param prefix     the string that word names should start with
+     * @param limit      the maximum number of results to return (if <= 0, returns all)
+     * @param ignoreCase if true, "Apple" will be found by "ap"
+     * @return a sorted list of word names matching the criteria
+     */
+    public List<String> listWords(String prefix, int limit, boolean ignoreCase) {
         if (Files.notExists(dictionaryPath)) return List.of();
+
         if (prefix == null || prefix.isBlank()) {
             return listAllWords();
         }
 
-        String cleanPrefix = prefix.trim().toLowerCase();
+        String cleanPrefix = prefix.trim();
+        if (ignoreCase) cleanPrefix = cleanPrefix.toLowerCase();
         String bucket = strategy.getBucket(cleanPrefix);
         Path bucketPath = dictionaryPath.resolve(bucket);
 
         if (Files.notExists(bucketPath)) return List.of();
 
         try (Stream<Path> files = Files.list(bucketPath)) {
-            return files
+            final String finalPrefix = cleanPrefix;
+            Stream<String> wordStream = files
                 .filter(path -> path.toString().endsWith(".json"))
                 .map(path -> path.getFileName().toString().replace(".json", ""))
                 .filter(name -> {
-                        String searchBase = strategy.normalize(name);
-                        return searchBase.startsWith(cleanPrefix);
+                        String normalized = strategy.normalize(name);
+                        if (ignoreCase) return normalized.toLowerCase().startsWith(finalPrefix);
+                        return normalized.startsWith(finalPrefix);
                     })
-                .sorted()
-                .toList();
+                .sorted();
+            if (limit > 0) {
+                wordStream = wordStream.limit(limit);
+            }
+            return wordStream.toList();
         } catch (IOException e) {
             System.err.println("Error reading bucket " + bucket + ": " + e.getMessage());
             return List.of();

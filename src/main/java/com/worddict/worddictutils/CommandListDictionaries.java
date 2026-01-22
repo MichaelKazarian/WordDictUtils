@@ -1,5 +1,7 @@
 package com.worddict.worddictutils;
 
+import com.worddict.worddictutils.strategies.*;
+
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
 import picocli.CommandLine.Option;
@@ -37,6 +39,20 @@ public class CommandListDictionaries implements Runnable {
         description = "Optional: Prefix to filter words (e.g., 'a')."
     )
     private String lookupPrefix;
+
+    @Option(
+        names = {"-i", "--ignore-case"},
+        description = "Ignore case during prefix lookup (default depends on language strategy)."
+    )
+    private Boolean ignoreCase;
+
+    @Option(
+        names = {"-n", "--limit"},
+        paramLabel = "COUNT",
+        defaultValue = "10",
+        description = "Maximum number of words to list (default: 10). Use 0 for all."
+    )
+    private int limit;
 
     @Override
     public void run() {
@@ -135,7 +151,8 @@ public class CommandListDictionaries implements Runnable {
         }
 
         DictionaryFileSystem dictFs = (DictionaryFileSystem) dictOpt.get();
-        List<String> words = dictFs.listWords(lookupPrefix);
+        boolean finalIgnoreCase = (ignoreCase != null) ? ignoreCase : baseOpt.get().getStrategy().isCaseInsensitive();
+        List<String> words = dictFs.listWords(lookupPrefix, limit, finalIgnoreCase);
         if (!words.isEmpty()) words.forEach(w -> System.out.println(w));
     }
 }
