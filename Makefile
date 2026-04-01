@@ -9,6 +9,7 @@ APP_NAME  := WordDictUtils
 VERSION   := 1.0.0
 JAR_FILE  := target/$(APP_NAME)-$(VERSION).jar
 MVN       := ./mvnw
+MVN_VER   := 3.9.6
 
 .PHONY: help
 help:
@@ -21,9 +22,15 @@ help:
 	@echo " make test         — Run tests"
 	@echo " make clean        — Clean build artifacts"
 
-build:
+build: setup-wrapper
 	@$(MVN) -q clean package -DskipTests=false
 	@echo "Built $(JAR_FILE)"
+
+setup-wrapper:
+	@if [ ! -f $(MVN) ]; then \
+		echo "Initializing Maven Wrapper $(MVN_VER)..."; \
+		mvn wrapper:wrapper -Dmaven=$(MVN_VER); \
+	fi
 
 run: $(JAR_FILE)
 	@java -jar $(JAR_FILE)
@@ -60,7 +67,13 @@ run-api:
 	mvn exec:java -Dexec.mainClass="com.worddict.web.DictionaryWebApi"
 
 test:
-	@mvn -q test
+	@if [ -f $(MVN) ]; then $(MVN) -q test; else mvn -q test; fi
 
 clean:
-	@mvn -q clean
+	@echo "Cleaning project artifacts..."
+	@if [ -f ./mvnw ]; then ./mvnw -q clean; else mvn -q clean; fi
+	@echo "Removing Maven Wrapper and local Maven distribution..."
+	@rm -rf .mvn
+	@rm -f mvnw
+	@rm -f mvnw.cmd
+	@echo "Project is now 'factory clean'."
