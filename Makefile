@@ -8,6 +8,7 @@ MAKEFLAGS += --no-print-directory
 APP_NAME  := WordDictUtils
 VERSION   := 1.0.0
 JAR_FILE  := target/$(APP_NAME)-$(VERSION).jar
+MVN       := ./mvnw
 
 .PHONY: help
 help:
@@ -21,7 +22,7 @@ help:
 	@echo " make clean        — Clean build artifacts"
 
 build:
-	@mvn -q clean package -DskipTests=false
+	@$(MVN) -q clean package -DskipTests=false
 	@echo "Built $(JAR_FILE)"
 
 run: $(JAR_FILE)
@@ -54,6 +55,9 @@ add-word: $(JAR_FILE)
 
 remove-word: $(JAR_FILE)
 	@java -Dupdate.stats=true -jar $(JAR_FILE) remove-word $(ARGS)
+
+run-api:
+	mvn exec:java -Dexec.mainClass="com.worddict.web.DictionaryWebApi"
 
 test:
 	@mvn -q test
