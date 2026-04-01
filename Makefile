@@ -10,6 +10,8 @@ VERSION   := 1.0.0
 JAR_FILE  := target/$(APP_NAME)-$(VERSION).jar
 MVN       := ./mvnw
 MVN_VER   := 3.9.6
+PORT      ?= 8080
+DICT_DIR  ?= ./my-dict
 
 .PHONY: help
 help:
@@ -63,8 +65,16 @@ add-word: $(JAR_FILE)
 remove-word: $(JAR_FILE)
 	@java -Dupdate.stats=true -jar $(JAR_FILE) remove-word $(ARGS)
 
-run-api:
-	mvn exec:java -Dexec.mainClass="com.worddict.web.DictionaryWebApi"
+run-api: $(JAR_FILE)
+	@java -jar $(JAR_FILE) run-api --port $(PORT) --dicts $(DICT_DIR)
+
+# make run-api-args ARGS="-p 8080 -d ./my-dict"
+run-api-args: $(JAR_FILE)
+	@java -jar $(JAR_FILE) run-api $(ARGS)
+
+run-api-mvn:
+	@$(MVN) exec:java -Dexec.mainClass="com.worddict.worddictutils.WordDictUtils" \
+		-Dexec.args="run-api --port $(PORT) --dicts $(DICT_DIR)"
 
 test:
 	@if [ -f $(MVN) ]; then $(MVN) -q test; else mvn -q test; fi

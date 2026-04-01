@@ -11,9 +11,14 @@ import com.worddict.worddictcore.Word;
 import java.util.Optional;
 
 public class DictionaryWebApi {
-    private void configure() {
-    }
+    private final int port;
+    private final String dictPath;
 
+    public DictionaryWebApi(int port, String dictPath) {
+        this.port = port;
+        this.dictPath = dictPath;
+    }
+    
     private void setupRouting(HttpRouting.Builder routing) {
         routing.get("/", this::handleRoot)
                .get("/api/v1/{source}/{target}/{word}", this::handleGetWord);
@@ -31,18 +36,20 @@ public class DictionaryWebApi {
     }
     
     public void start() {
-        start(8080);
-    }
-
-    public void start(int port) {
-        WebServer.builder()
+        WebServer server = WebServer.builder()
             .port(port)
             .routing(this::setupRouting)
             .build()
             .start();
+        
+        System.out.println("WEB server started on http://localhost:" + port);
+        System.out.println("Dictionaries directory: " + dictPath);
     }
 
     public static void main(String[] args) {
-        new DictionaryWebApi().start();
+        int port = (args.length > 0) ? Integer.parseInt(args[0]) : 8080;
+        String path = (args.length > 1) ? args[1] : "./dicts";
+        
+        new DictionaryWebApi(port, path).start();
     }
 }

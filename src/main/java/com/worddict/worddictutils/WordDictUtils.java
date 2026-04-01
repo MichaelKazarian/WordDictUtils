@@ -13,7 +13,8 @@ import picocli.CommandLine.Command;
         CommandCreateDictionary.class,
         CommandListDictionaries.class,
         CommandAddWord.class,
-        CommandRemoveWord.class
+        CommandRemoveWord.class,
+        CommandRunApi.class
     }
 )
 public class WordDictUtils implements Runnable {
