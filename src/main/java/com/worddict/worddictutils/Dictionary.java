@@ -77,11 +77,19 @@ public class Dictionary {
     }
 
     /**
-     * List of word names.
-     * @param prefix Optional prefix to filter the results (case-insensitive).
-     * @return A sorted list of word strings.
+     * Lists words with default settings: a limit of 10 results and case sensitivity
+     * defined by the specific language strategy.
+     *
+     * @param prefix optional prefix to filter the results
+     * @return a sorted list of up to 10 word names
+     * @see Strategy#isCaseInsensitive()
+     * @see #listWords(String, int, boolean)
      */
     public List<String> listWords(String prefix) {
+        return listWords(prefix, 10, strategy.isCaseInsensitive());
+    }
+
+    public List<String> listWords(String prefix, int limit, boolean ignoreCase) {
         return new ArrayList<String>();
     }
 

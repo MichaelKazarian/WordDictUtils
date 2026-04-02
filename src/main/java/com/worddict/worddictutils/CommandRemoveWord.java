@@ -5,6 +5,7 @@ import picocli.CommandLine.*;
 
 import java.nio.file.Path;
 import java.util.concurrent.Callable;
+import java.util.Optional;
 
 @Command(name = "remove-word", description = "Removes a word from the dictionary")
 public class CommandRemoveWord implements Callable<Integer> {
@@ -23,19 +24,25 @@ public class CommandRemoveWord implements Callable<Integer> {
 
     @Override
     public Integer call() throws Exception {
-        Language srcLang = Language.getLanguageByCode(srcCode);
-        BaseLanguageFileSystem blfs = new BaseLanguageFileSystem(srcLang, dictDir);
-        
-        DictionaryFileSystem dict = (DictionaryFileSystem) blfs.getDictionary(targetDictName);
+    Language srcLang = Language.getLanguageByCode(srcCode);
+    BaseLanguageFileSystem blfs = new BaseLanguageFileSystem(srcLang, dictDir);
+    Optional<Dictionary> dictOpt = blfs.getDictionary(targetDictName);
 
-        if (dict.deleteWord(wordText)) {
-            System.out.printf("Successfully removed '%s' from %s/%s\n", 
-                              wordText, srcCode, targetDictName);
-            return 0;
-        } else {
-            System.err.printf("Error: Word '%s' not found in %s/%s\n", 
-                              wordText, srcCode, targetDictName);
-            return 1;
-        }
+    if (dictOpt.isEmpty()) {
+        System.err.printf("Error: Dictionary '%s' not found for language '%s'.\n",
+                          targetDictName, srcCode);
+        return 1;
+    }
+    Dictionary dict = dictOpt.get();
+
+    if (dict.deleteWord(wordText)) {
+        System.out.printf("Successfully removed '%s' from %s/%s\n",
+                          wordText, srcCode, targetDictName);
+        return 0;
+    } else {
+        System.err.printf("Error: Word '%s' not found in %s/%s\n",
+                          wordText, srcCode, targetDictName);
+        return 1;
+    }
     }
 }

@@ -28,6 +28,10 @@ public enum DictionaryManagerFileSystem implements DictionaryManager {
 
     public synchronized void init(String rootPathString) throws java.io.IOException {
         if (initialized) {
+            Path newPath = Paths.get(rootPathString).toAbsolutePath();
+            if (newPath.equals(this.rootDirectory)) {
+                return;
+            }
             throw new IllegalStateException("DictionaryManagerFileSystem is already initialized.");
         }
 

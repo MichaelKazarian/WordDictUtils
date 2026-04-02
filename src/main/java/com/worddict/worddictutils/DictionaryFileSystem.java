@@ -105,19 +105,6 @@ public class DictionaryFileSystem extends Dictionary {
     }
 
     /**
-     * Lists words with default settings: a limit of 10 results and case sensitivity 
-     * defined by the specific language strategy.
-     *
-     * @param prefix optional prefix to filter the results
-     * @return a sorted list of up to 10 word names
-     * @see Strategy#isCaseInsensitive()
-     * @see #listWords(String, int, boolean)
-     */
-    public List<String> listWords(String prefix) {
-        return listWords(prefix, 10, strategy.isCaseInsensitive());
-    }
-
-    /**
      * Lists words using an optimized bucket search based on the prefix.
      * <p>
      * The method uses the strategy's bucket system to narrow down the search to a specific 

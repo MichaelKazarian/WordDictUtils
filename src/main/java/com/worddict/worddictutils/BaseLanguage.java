@@ -123,18 +123,11 @@ public abstract class BaseLanguage {
      * @return the {@link Dictionary} object associated with the given name
      * @throws IllegalArgumentException if the dictionary isn't found or is blank.
      */
-    public Dictionary getDictionary(String dictName) {
+    public Optional<Dictionary> getDictionary(String dictName) {
         if (dictName == null || dictName.isBlank()) {
-            throw new IllegalArgumentException("Dictionary name cannot be empty");
+            return Optional.empty();
         }
         String sanitizedName = sanitize(dictName);
-        Dictionary dict = dictionaries.get(sanitizedName);
-
-        if (dict == null) {
-            var m = "Dictionary '" + dictName + "' not found. " +
-                "Please create it first using 'create-dict'.";
-            throw new IllegalArgumentException(m);
-        }
-        return dict;
+        return Optional.ofNullable(dictionaries.get(sanitizedName));
     }
 }

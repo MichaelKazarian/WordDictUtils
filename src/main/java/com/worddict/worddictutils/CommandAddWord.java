@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.Optional;
 
 @Command(name = "add-word", description = "Adds or overwrites a word in the dictionary")
 public class CommandAddWord implements Callable<Integer> {
@@ -44,7 +45,14 @@ public class CommandAddWord implements Callable<Integer> {
     public Integer call() throws Exception {
         Language srcLang = Language.getLanguageByCode(srcCode);
         BaseLanguageFileSystem blfs = new BaseLanguageFileSystem(srcLang, dictDir);
-        Dictionary dict = blfs.getDictionary(targetDictName);
+        Optional<Dictionary> dictOpt = blfs.getDictionary(targetDictName);
+
+        if (dictOpt.isEmpty()) { // Перевірка наявності
+            System.err.printf("Error: Dictionary '%s' not found for language '%s'.\n",
+                              targetDictName, srcCode);
+            return 1;
+        }
+        Dictionary dict = dictOpt.get();
         Word word = new Word(wordText);
         applyPronunciations(word);
         applyNote(word);
@@ -53,7 +61,8 @@ public class CommandAddWord implements Callable<Integer> {
         processAudioFiles(word, blfs.getLanguageRootPath().resolve("--sounds"));
 
         dict.saveWord(word);
-        System.out.printf("Successfully saved '%s' to %s/%s\n", wordText, srcCode, dict.getName());
+        System.out.printf("Successfully saved '%s' to %s/%s\n",
+                          wordText, srcCode, dict.getName());
         return 0;
     }
 

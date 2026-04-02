@@ -141,18 +141,13 @@ public class CommandListDictionaries implements Runnable {
             return;
         }
 
-        Optional<Dictionary> dictOpt = baseOpt.get().listDictionaries().stream()
-                .filter(d -> d.getName().equalsIgnoreCase(target))
-                .findFirst();
-
+        Optional<Dictionary> dictOpt = baseOpt.get().getDictionary(target);
         if (dictOpt.isEmpty()) {
             System.err.println("\nError: Dictionary '" + target + "' not found for language '" + src + "'.");
             return;
         }
-
-        DictionaryFileSystem dictFs = (DictionaryFileSystem) dictOpt.get();
-        boolean finalIgnoreCase = (ignoreCase != null) ? ignoreCase : baseOpt.get().getStrategy().isCaseInsensitive();
-        List<String> words = dictFs.listWords(lookupPrefix, limit, finalIgnoreCase);
-        if (!words.isEmpty()) words.forEach(w -> System.out.println(w));
+        boolean ic = (ignoreCase != null) ? ignoreCase : baseOpt.get().getStrategy().isCaseInsensitive();
+        List<String> words = dictOpt.get().listWords(lookupPrefix, limit, ic);
+        if (!words.isEmpty()) words.forEach(System.out::println);
     }
 }

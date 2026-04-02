@@ -34,60 +34,40 @@ public class DictionaryWebApi {
     }
 
     private void handleGetWord(ServerRequest req, ServerResponse res) {
-        // 1. Отримуємо параметри з URL
         String source = req.path().pathParameters().get("source");
         String target = req.path().pathParameters().get("target");
-        String prefix = req.path().pathParameters().get("word"); // 'word' тут виступає як префікс для пошуку
-
+        String prefix = req.path().pathParameters().get("word");
+        // int limit = req.query().get("limit").asInt().orElse(10);
         int limit = 10;
 
-        try {
-            // 2. Шукаємо мову
-            Optional<BaseLanguage> baseOpt = manager.getBaseLanguage(source);
-            if (baseOpt.isEmpty()) {
-                res.status(404).send("Source language '" + source + "' not found.\n");
-                return;
-            }
-
-            // 3. Шукаємо словник
-            Optional<Dictionary> dictOpt = baseOpt.get().listDictionaries().stream()
-                .filter(d -> d.getName().equalsIgnoreCase(target))
-                .findFirst();
-
-            if (dictOpt.isEmpty()) {
-                res.status(404).send("Dictionary '" + target + "' not found for " + source + ".\n");
-                return;
-            }
-
-            // 4. Логіка пошуку за префіксом (як у вашому CLI)
-            DictionaryFileSystem dictFs = (DictionaryFileSystem) dictOpt.get();
-        
-            // Визначаємо ignoreCase на основі стратегії мови
-            boolean finalIgnoreCase = baseOpt.get().getStrategy().isCaseInsensitive();
-        
-            List<String> words = dictFs.listWords(prefix, limit, finalIgnoreCase);
-
-            if (words.isEmpty()) {
-                res.status(404).send("No words found starting with '" + prefix + "'\n");
-            } else {
-                // З'єднуємо список слів у текстову відповідь
-                String responseBody = String.join("\n", words) + "\n";
-                res.send(responseBody);
-            }
-
-        } catch (Exception e) {
-            res.status(500).send("Server Error: " + e.getMessage() + "\n");
+        Optional<BaseLanguage> baseOpt = manager.getBaseLanguage(source);
+        if (baseOpt.isEmpty()) {
+            res.status(404).send("Language not found: " + source + "\n");
+            return;
         }
+
+        BaseLanguage base = baseOpt.get();
+        Optional<Dictionary> dictOpt = base.getDictionary(target); //Отримуємо словник
+        if (dictOpt.isEmpty()) {
+            res.status(404).send("Dictionary not found: " + target + " for " + source + "\n");
+            return;
+        }
+
+        // Визначаємо ignoreCase на основі стратегії, якщо користувач не вказав інше
+        // (У Web API зазвичай використовуємо дефолт стратегії мови)
+        boolean ic = base.getStrategy().isCaseInsensitive();
+        List<String> words = dictOpt.get().listWords(prefix, limit, ic);
+        if (words.isEmpty()) {
+            res.status(404).send("No words found for prefix: " + prefix + "\n");
+            return;
+        }
+
+        res.send(String.join("\n", words) + "\n");
     }
     
     public void start() {
         try {
-            // Ми не можемо перевірити 'initialized' зовні (він private),
-            // але ми можемо обгорнути виклик або додати публічний метод ініціалізації з перевіркою.
             manager.init(this.dictPath);
-        } catch (IllegalStateException e) {
-            // Якщо вже ініціалізовано — ігноруємо, це нормально для синглтона
-            System.out.println("Dictionary Manager already initialized.");
         } catch (Exception e) {
             System.err.println("Failed to initialize dictionaries: " + e.getMessage());
             return;
