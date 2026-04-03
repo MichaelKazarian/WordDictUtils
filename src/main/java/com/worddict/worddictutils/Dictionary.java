@@ -13,7 +13,7 @@ import java.util.Optional;
  * Base class for a dictionary of one language pair (source → target).
  * Provides minimal default implementations; subclasses must override for storage backends.
  */
-public class Dictionary {
+public abstract class Dictionary {
     protected final Language targetLanguage;
     protected final Strategy strategy;
     protected final BaseLanguage parentLanguage;
@@ -97,6 +97,16 @@ public class Dictionary {
     public int wordsCount() {
         return 0;
     }
+
+    /**
+     * Перевіряє, чи існує слово в словнику.
+     */
+    public abstract boolean isPresent(String wordText);
+
+    /**
+     * Повертає повний JSON вміст слова або null, якщо слово не знайдено.
+     */
+    public abstract String getWordJson(String wordText);
 
     // === Audio Operations ===
 

@@ -4,6 +4,9 @@ import io.helidon.webserver.WebServer;
 import io.helidon.webserver.http.HttpRouting;
 import io.helidon.webserver.http.ServerRequest;
 import io.helidon.webserver.http.ServerResponse;
+import io.helidon.http.Http;
+import io.helidon.http.HttpMediaType;
+import io.helidon.http.Status;
 
 import com.worddict.worddictutils.BaseLanguage;
 import com.worddict.worddictutils.DictionaryManagerFileSystem;
@@ -26,7 +29,10 @@ public class DictionaryWebApi {
     
     private void setupRouting(HttpRouting.Builder routing) {
         routing.get("/", this::handleRoot)
-            .get("/api/v1/{source}/{target}/{word}", this::handleGetWord);
+            // q - query (пошук списку слів за префіксом)
+            .get("/api/v1/q/{source}/{target}/{word}", this::handleGetWord)
+            // g - get (отримання повного JSON конкретного слова)
+            .get("/api/v1/g/{source}/{target}/{word}", this::handleGetWordJson);
     }
 
     private void handleRoot(ServerRequest req, ServerResponse res) {
@@ -63,6 +69,25 @@ public class DictionaryWebApi {
         }
 
         res.send(String.join("\n", words) + "\n");
+    }
+
+    private void handleGetWordJson(ServerRequest req, ServerResponse res) {
+        String source = req.path().pathParameters().get("source");
+        String target = req.path().pathParameters().get("target");
+        String wordText = req.path().pathParameters().get("word");
+
+        manager.getBaseLanguage(source)
+            .flatMap(base -> base.getDictionary(target))
+            .ifPresentOrElse(dict -> {
+                    String json = dict.getWordJson(wordText);
+                    if (json != null) {
+                        res.status(io.helidon.http.Status.OK_200)
+                            .header(io.helidon.http.HeaderNames.CONTENT_TYPE, "application/json")
+                            .send(json);
+                    } else {
+                        res.status(404).send("Word not found\n");
+                    }
+                }, () -> res.status(404).send("Dictionary not found\n"));
     }
     
     public void start() {

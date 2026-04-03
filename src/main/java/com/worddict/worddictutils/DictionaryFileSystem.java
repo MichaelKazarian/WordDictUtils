@@ -153,6 +153,38 @@ public class DictionaryFileSystem extends Dictionary {
     }
 
     /**
+     * Внутрішній метод для отримання шляху до файлу слова.
+     * Централізує логіку формування шляху: [dictionaryPath]/[bucket]/[word].json
+     */
+    private Path getWordPath(String wordText) {
+        String fileName = strategy.getFileName(wordText);
+        if (fileName.isEmpty()) return null;
+
+        String bucket = strategy.getBucket(fileName);
+        return dictionaryPath.resolve(bucket).resolve(fileName + ".json");
+    }
+
+    @Override
+    public boolean isPresent(String wordText) {
+        Path filePath = getWordPath(wordText);
+        return filePath != null && Files.exists(filePath);
+    }
+
+    @Override
+    public String getWordJson(String wordText) {
+        if (!isPresent(wordText)) {
+            return null;
+        }
+
+        try {
+            return Files.readString(getWordPath(wordText), StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            System.err.println("Error reading word file '" + wordText + "': " + e.getMessage());
+            return null;
+        }
+    }
+
+    /**
      * Performs a complete scan of the dictionary structure to find all words.
      * Searches up to 2 levels deep to cover all alphabet/prefix buckets.
      *
