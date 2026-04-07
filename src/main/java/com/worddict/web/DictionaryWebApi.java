@@ -29,6 +29,8 @@ public class DictionaryWebApi {
     
     private void setupRouting(HttpRouting.Builder routing) {
         routing.get("/", this::handleRoot)
+            .get("/api/v1/langs", this::handleListLangs)
+            .get("/api/v1/dicts/{source}", this::handleListDicts)
             // q - query (пошук списку слів за префіксом)
             .get("/api/v1/q/{source}/{target}/{word}", this::handleGetWord)
             // g - get (отримання повного JSON конкретного слова)
@@ -39,6 +41,50 @@ public class DictionaryWebApi {
         res.send("It works :)\n");
     }
 
+    private void handleListLangs(ServerRequest req, ServerResponse res) {
+        var languages = manager.getBaseLanguages();
+    
+        // Формуємо простий JSON масив об'єктів
+        StringBuilder sb = new StringBuilder("[");
+        languages.forEach(bl -> {
+                String code = bl.getLanguage().getLanguageCode();
+                int count = bl.listDictionaries().size();
+                sb.append(String.format("{\"code\":\"%s\", \"dictionaries\":%d},", code, count));
+            });
+        if (sb.length() > 1) sb.setLength(sb.length() - 1); // видаляємо останню кому
+        sb.append("]");
+
+        res.status(Status.OK_200)
+            .header("Content-Type", "application/json")
+            .send(sb.toString());
+    }
+
+    private void handleListDicts(ServerRequest req, ServerResponse res) {
+        String source = req.path().pathParameters().get("source");
+
+        manager.getBaseLanguage(source).ifPresentOrElse(base -> {
+                var dictionaries = base.listDictionaries();
+        
+                StringBuilder sb = new StringBuilder("{");
+                sb.append(String.format("\"source\":\"%s\", \"dictionaries\":[", source));
+        
+                dictionaries.forEach(dict -> {
+                        sb.append(String.format("{\"name\":\"%s\", \"wordsCount\":%d},", 
+                                                dict.getName(), dict.wordsCount()));
+                    });
+        
+                if (!dictionaries.isEmpty()) sb.setLength(sb.length() - 1);
+                sb.append("]}");
+
+                res.status(Status.OK_200)
+                    .header("Content-Type", "application/json")
+                    .send(sb.toString());
+            }, () -> res.status(404).send("Source language not found\n"));
+    }
+
+    /**
+     * Пошук списку слів за префіксом
+     */
     private void handleGetWord(ServerRequest req, ServerResponse res) {
         String source = req.path().pathParameters().get("source");
         String target = req.path().pathParameters().get("target");
@@ -71,6 +117,9 @@ public class DictionaryWebApi {
         res.send(String.join("\n", words) + "\n");
     }
 
+    /**
+     * Отримання повного JSON конкретного слова
+     */
     private void handleGetWordJson(ServerRequest req, ServerResponse res) {
         String source = req.path().pathParameters().get("source");
         String target = req.path().pathParameters().get("target");
