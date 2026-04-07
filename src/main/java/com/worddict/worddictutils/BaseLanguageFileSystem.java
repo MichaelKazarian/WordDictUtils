@@ -101,6 +101,12 @@ public class BaseLanguageFileSystem extends BaseLanguage {
             Files.createDirectories(dictPath);
             DictionaryFileSystem newDict = new DictionaryFileSystem(this, targetLanguage, additionalName);
             dictionaries.put(dictName, newDict);
+
+            DictionaryProperties props = new DictionaryProperties();
+            props.name = "Dictionary " + targetLanguage.getLanguageCode().toUpperCase();
+            Path propsFile = dictPath.resolve("properties.json");
+            Files.writeString(propsFile, props.toJsonObject().toString(2), java.nio.charset.StandardCharsets.UTF_8);
+
             return newDict;
         } catch (IOException e) {
             throw new RuntimeException("Failed to create dictionary directory: " + dictPath, e);

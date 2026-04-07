@@ -22,6 +22,7 @@ public class DictionaryFileSystem extends Dictionary {
         super(parent, targetLanguage, additionalName);
         this.parentLanguage = parent;
         this.dictionaryPath = parent.getDictionaryPath(this.getName());
+        loadProperties();
     }
 
     @Override
@@ -202,6 +203,22 @@ public class DictionaryFileSystem extends Dictionary {
         } catch (IOException e) {
             System.err.println("Error scanning all dictionary words: " + e.getMessage());
             return List.of();
+        }
+    }
+
+    /**
+     * Завантажує метадані словника з файлу properties.json, якщо він існує.
+     */
+    private void loadProperties() {
+        Path propsPath = dictionaryPath.resolve("properties.json");
+        if (Files.exists(propsPath)) {
+            try {
+                String content = Files.readString(propsPath, StandardCharsets.UTF_8);
+                JSONObject json = new JSONObject(content);
+                this.props = new DictionaryProperties(json);
+            } catch (IOException e) {
+                System.err.println("Warning: Could not read properties.json for " + getName() + ": " + e.getMessage());
+            }
         }
     }
 

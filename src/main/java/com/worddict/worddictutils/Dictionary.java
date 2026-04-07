@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Optional;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 /**
  * Base class for a dictionary of one language pair (source → target).
@@ -18,6 +20,7 @@ public abstract class Dictionary {
     protected final Strategy strategy;
     protected final BaseLanguage parentLanguage;
     protected String additionalName;
+    protected DictionaryProperties props = new DictionaryProperties();
 
     /** Creates a dictionary for a language pair. */
     public Dictionary(BaseLanguage parent, Language targetLanguage) {
@@ -130,8 +133,22 @@ public abstract class Dictionary {
         return false;
     }
 
+    public DictionaryProperties getProperties() {
+        return props;
+    }
+
     @Override
     public String toString() {
         return String.format("Dictionary[%s, words: %d]", getName(), wordsCount());
+    }
+
+    /**
+     * Повертає метадані словника у форматі JSONObject.
+     */
+    public JSONObject toJsonObject() {
+        JSONObject json = props.toJsonObject();
+        json.put("id", getName());
+        json.put("wordsCount", wordsCount());
+        return json;
     }
 }

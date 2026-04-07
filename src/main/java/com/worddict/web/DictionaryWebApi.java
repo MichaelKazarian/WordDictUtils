@@ -16,6 +16,8 @@ import com.worddict.worddictcore.Word;
 
 import java.util.Optional;
 import java.util.List;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 public class DictionaryWebApi {
     private final int port;
@@ -65,21 +67,21 @@ public class DictionaryWebApi {
         manager.getBaseLanguage(source).ifPresentOrElse(base -> {
                 var dictionaries = base.listDictionaries();
         
-                StringBuilder sb = new StringBuilder("{");
-                sb.append(String.format("\"source\":\"%s\", \"dictionaries\":[", source));
+                JSONArray dictsArray = new JSONArray();
+                for (Dictionary dict : dictionaries) {
+                    dictsArray.put(dict.toJsonObject());
+                }
         
-                dictionaries.forEach(dict -> {
-                        sb.append(String.format("{\"name\":\"%s\", \"wordsCount\":%d},", 
-                                                dict.getName(), dict.wordsCount()));
-                    });
-        
-                if (!dictionaries.isEmpty()) sb.setLength(sb.length() - 1);
-                sb.append("]}");
+                JSONObject result = new JSONObject();
+                result.put("source", source);
+                result.put("dictionaries", dictsArray);
 
-                res.status(Status.OK_200)
-                    .header("Content-Type", "application/json")
-                    .send(sb.toString());
-            }, () -> res.status(404).send("Source language not found\n"));
+                res.status(io.helidon.http.Status.OK_200)
+                    .header(io.helidon.http.HeaderNames.CONTENT_TYPE, "application/json")
+                    .send(result.toString(2));
+           
+            }, () -> res.status(io.helidon.http.Status.NOT_FOUND_404)
+            .send("Source language not found: " + source + "\n"));
     }
 
     /**
