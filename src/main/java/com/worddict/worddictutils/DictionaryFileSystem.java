@@ -11,6 +11,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.stream.Stream;
+import java.util.Optional;
 import java.time.LocalDateTime;
 
 public class DictionaryFileSystem extends Dictionary {
@@ -154,6 +155,49 @@ public class DictionaryFileSystem extends Dictionary {
     }
 
     /**
+     * Filesystem-based implementation of word access tracking.
+     * <p>
+     * This method maintains word counters by managing physical files within a "calls" directory.
+     * It uses a naming convention where the filename includes the word and its hit count
+     * (e.g., {@code apple.1}).
+     * </p>
+     * <p>
+     * <b>Operational Logic:</b>
+     * <ul>
+     * <li><b>Missing Words:</b> Prefixed with {@code ~~~} (e.g., {@code ~~~banana.1}) to
+     * highlight gaps in the dictionary.</li>
+     * <li><b>Successful Lookups:</b> Increments existing counters or creates a new file.
+     * If a word was previously marked as missing ({@code ~~~}), the marker is removed
+     * upon the first successful access.</li>
+     * </ul>
+     * </p>
+     * <p>
+     * Errors during filesystem operations are caught and suppressed to ensure that
+     * analytics processing never disrupts the primary dictionary service.
+     * </p>
+     *
+     * @param word      the text of the word being tracked
+     * @param isMissing {@code true} to prefix the file as a missing entry,
+     * {@code false} for standard hit counting
+     */
+    @Override
+    public void processCounter(String word, boolean isMissing) {
+        try {
+            Path callsDir = prepareCallsDir();
+            String prefix = isMissing ? "~~~" + word + "." : word + ".";
+            findCounterFile(callsDir, prefix).ifPresentOrElse(
+                                                              this::incrementFile,
+                                                              () -> createInitialFile(callsDir, prefix)
+                                                              );
+            if (!isMissing) {
+                removeMissingMarker(callsDir, word);
+            }
+        } catch (IOException e) {
+            // Статистика не повинна валити сервер, тому просто логуємо FINE/DEBUG
+        }
+    }
+
+    /**
      * Внутрішній метод для отримання шляху до файлу слова.
      * Централізує логіку формування шляху: [dictionaryPath]/[bucket]/[word].json
      */
@@ -270,5 +314,80 @@ public class DictionaryFileSystem extends Dictionary {
         Files.move(tempFile, statsFile,
                    StandardCopyOption.REPLACE_EXISTING,
                    StandardCopyOption.ATOMIC_MOVE);
+    }
+
+    /**
+     * Ensures the "calls" directory exists within the statistics folder.
+     *
+     * @return the path to the initialized calls directory
+     * @throws IOException if the directory cannot be accessed or created
+     */
+    private Path prepareCallsDir() throws IOException {
+        Path calls = getStatsDir().resolve("calls");
+        if (Files.notExists(calls)) Files.createDirectories(calls);
+        return calls;
+    }
+
+    /**
+     * Searches for a counter file in the specified directory that matches the given prefix.
+     *
+     * @param dir    the directory to search in
+     * @param prefix the filename prefix (usually the word plus a dot)
+     * @return an Optional containing the found Path, or empty if no file matches the prefix
+     * @throws IOException if an I/O error occurs during directory listing
+     */
+    private Optional<Path> findCounterFile(Path dir, String prefix) throws IOException {
+        try (Stream<Path> stream = Files.list(dir)) {
+            return stream.filter(p -> p.getFileName().toString().startsWith(prefix)).findFirst();
+        }
+    }
+
+    /**
+     * Increments the hit counter by renaming the file.
+     * <p>
+     * This method extracts the numeric suffix from the filename (e.g., from "apple.5" to 5),
+     * increments it, and performs an atomic move to update the counter.
+     * </p>
+     *
+     * @param file the current counter file to be incremented
+     */
+    private void incrementFile(Path file) {
+        try {
+            String name = file.getFileName().toString();
+            int dot = name.lastIndexOf('.');
+            int count = Integer.parseInt(name.substring(dot + 1));
+            String newName = name.substring(0, dot + 1) + (count + 1);
+            Files.move(file, file.resolveSibling(newName), StandardCopyOption.ATOMIC_MOVE);
+        } catch (Exception ignored) {}
+    }
+
+    /**
+     * Creates a new counter file with an initial count of 1.
+     *
+     * @param dir    the directory where the file should be created
+     * @param prefix the filename prefix, including the word and optional markers
+     */
+    private void createInitialFile(Path dir, String prefix) {
+        try {
+            Files.createFile(dir.resolve(prefix + "1"));
+        } catch (IOException ignored) {}
+    }
+
+    /**
+     * Removes the "missing" marker file for a word if it exists.
+     * <p>
+     * This is typically called when a word that was previously flagged as missing
+     * is successfully found or added to the dictionary.
+     * </p>
+     *
+     * @param dir  the directory containing counter files
+     * @param word the word whose missing marker (prefix ~~~) should be deleted
+     */
+    private void removeMissingMarker(Path dir, String word) {
+        try {
+            findCounterFile(dir, "~~~" + word + ".").ifPresent(p -> {
+                    try { Files.delete(p); } catch (IOException ignored) {}
+                });
+        } catch (IOException ignored) {}
     }
 }

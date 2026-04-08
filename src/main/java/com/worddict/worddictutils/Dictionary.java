@@ -137,6 +137,52 @@ public abstract class Dictionary {
         return props;
     }
 
+    /**
+     * Records an access event for a specific word to track usage analytics.
+     * <p>
+     * This method acts as a notification hook to signal that a word has been
+     * requested. It allows implementations to maintain hit counters, log
+     * missing entries, or perform other analytics-driven operations.
+     * </p>
+     * <p>
+     * <b>Note:</b> This operation is intended to be invoked asynchronously
+     * to prevent statistical processing from blocking the primary task execution.
+     * </p>
+     *
+     * @param word      the text of the word being accessed or searched
+     * @param isMissing {@code true} if the word was not found in the dictionary;
+     * {@code false} if the lookup was successful
+     */
+    public void processCounter(String word, boolean isMissing) {
+        // Default implementation does nothing
+    }
+
+    /**
+     * Creates a new dictionary if the base language exists.
+     * @param sourceLangCode source language (e.g. "en")
+     * @param targetLangCode target language (e.g. "uk")
+     * @return Optional with the dictionary instance, or empty if base lang not found.
+     */
+    public static Optional<Dictionary> createRequestedDictionary(String sourceLangCode, String targetLangCode) {
+        DictionaryManagerFileSystem manager = DictionaryManagerFileSystem.INSTANCE;
+        return manager.getBaseLanguage(sourceLangCode).map(base -> {
+                try {
+                    // Check if it was created by a concurrent request
+                    Optional<Dictionary> existing = base.getDictionary(targetLangCode);
+                    if (existing.isPresent()) return existing.get();
+
+                    // Physical creation (folders, properties.json)
+                    Language target = Language.getLanguageByCode(targetLangCode);
+                    Dictionary newDict = base.createDictionary(target);
+                    System.out.println("[AutoCreate] Successfully initialized " + sourceLangCode + "-" + targetLangCode);
+                    return newDict;
+                } catch (Exception e) {
+                    System.err.println("[AutoCreate] Critical error: " + e.getMessage());
+                    return null; // map() will convert this to Optional.empty()
+                }
+            });
+    }
+
     @Override
     public String toString() {
         return String.format("Dictionary[%s, words: %d]", getName(), wordsCount());
