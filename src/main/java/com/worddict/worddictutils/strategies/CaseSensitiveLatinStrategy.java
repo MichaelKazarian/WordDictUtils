@@ -12,6 +12,7 @@ public class CaseSensitiveLatinStrategy extends LatinStrategy {
      * Indicates that the strategy is case-sensitive.
      * Distinguishes between uppercase and lowercase letters during lookups.
      */
+    @Override
     public boolean isCaseInsensitive() {
         return false;
     }

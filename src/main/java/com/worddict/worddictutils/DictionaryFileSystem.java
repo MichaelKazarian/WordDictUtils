@@ -2,6 +2,8 @@ package com.worddict.worddictutils;
 
 import com.worddict.worddictcore.Language;
 import com.worddict.worddictcore.Word;
+import com.worddict.worddictutils.strategies.Strategy;
+import com.worddict.worddictutils.strategies.CaseSensitiveLatinStrategy;
 import org.json.JSONObject;
 
 import java.io.IOException;
@@ -13,6 +15,10 @@ import java.util.List;
 import java.util.stream.Stream;
 import java.util.Optional;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Objects;
+import java.util.Collections;
+import java.util.stream.Collectors;
 
 public class DictionaryFileSystem extends Dictionary {
 
@@ -202,17 +208,56 @@ public class DictionaryFileSystem extends Dictionary {
      * Централізує логіку формування шляху: [dictionaryPath]/[bucket]/[word].json
      */
     private Path getWordPath(String wordText) {
+        return getWordPath(wordText, strategy);
+    }
+
+    /**
+     * Отримує шлях до файлу з можливістю ігнорування регістру.
+     * Якщо caseSensitive = false, метод знайде "Africa.json", навіть якщо запит "africa".
+     */
+    private Path getWordPath(String wordText, Strategy strategy) {
         String fileName = strategy.getFileName(wordText);
         if (fileName.isEmpty()) return null;
 
         String bucket = strategy.getBucket(fileName);
-        return dictionaryPath.resolve(bucket).resolve(fileName + ".json");
+        return dictionaryPath.resolve(bucket).resolve(fileName + ".json");        
     }
 
+    /**
+     * Performs a batch lookup of words by checking the filesystem.
+     * <p>
+     * The method sorts and normalizes input to leverage filesystem caching 
+     * and minimize directory switching.
+     * </p>
+     */
     @Override
-    public boolean isPresent(String wordText) {
-        Path filePath = getWordPath(wordText);
-        return filePath != null && Files.exists(filePath);
+    public List<String> find(List<String> words) {
+         List<String> results = new ArrayList<>();
+        if (words == null || words.isEmpty()) {
+            return results;
+        }
+
+        List<String> normalized = words.stream()
+            .filter(Objects::nonNull)
+            .map(String::trim)
+            .filter(s -> !s.isEmpty())
+            .map(String::toLowerCase)
+            .distinct()
+            .sorted()
+            .collect(Collectors.toList());
+
+        for (String word : normalized) {
+            if (java.nio.file.Files.exists(getWordPath(word))) { 
+                results.add(word);
+            } else {
+                String capitalized = word.substring(0, 1).toUpperCase() + word.substring(1);
+                System.out.println(getWordPath(capitalized));
+                if (Files.exists(getWordPath(capitalized, new CaseSensitiveLatinStrategy()))) {
+                    results.add(capitalized);
+                }
+            }
+        }
+        return results;
     }
 
     @Override

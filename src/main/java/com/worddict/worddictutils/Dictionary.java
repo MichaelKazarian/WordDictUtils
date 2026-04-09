@@ -102,9 +102,33 @@ public abstract class Dictionary {
     }
 
     /**
-     * Перевіряє, чи існує слово в словнику.
+     * Searches for multiple words in the dictionary and returns those that exist.
+     * <p>
+     * This method is case-insensitive and handles input normalization (trimming).
+     * It is optimized for batch processing to reduce I/O overhead.
+     * </p>
+     *
+     * @param words a list of words to check
+     * @return a list of words found in the dictionary, normalized to lower case
      */
-    public abstract boolean isPresent(String wordText);
+    public abstract List<String> find(List<String> words);
+
+    /**
+     * Checks if a single word exists in the dictionary.
+     * <p>
+     * This implementation relies on the {@link #find(List)} method to ensure
+     * consistent normalization and lookup logic.
+     * </p>
+     *
+     * @param wordText the word to check
+     * @return {@code true} if the word exists, {@code false} otherwise
+     */
+    public boolean isPresent(String wordText) {
+        if (wordText == null || wordText.isBlank()) {
+            return false;
+        }
+        return !find(List.of(wordText)).isEmpty();
+    }
 
     /**
      * Повертає повний JSON вміст слова або null, якщо слово не знайдено.

@@ -7,6 +7,7 @@ import io.helidon.webserver.http.ServerResponse;
 import io.helidon.http.Http;
 import io.helidon.http.HttpMediaType;
 import io.helidon.http.Status;
+import io.helidon.common.GenericType;
 
 import com.worddict.worddictutils.BaseLanguage;
 import com.worddict.worddictutils.DictionaryManagerFileSystem;
@@ -16,6 +17,7 @@ import com.worddict.worddictutils.StatisticsManager;
 import com.worddict.worddictcore.Word;
 
 import java.util.Optional;
+import java.util.ArrayList;
 import java.util.List;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -56,7 +58,8 @@ public class DictionaryWebApi {
             // q - query (пошук списку слів за префіксом)
             .get("/api/v1/q/{source}/{target}/{word}", this::handleGetWord)
             // g - get (отримання повного JSON конкретного слова)
-            .get("/api/v1/g/{source}/{target}/{word}", this::handleGetWordJson);
+            .get("/api/v1/g/{source}/{target}/{word}", this::handleGetWordJson)
+            .post("/api/v1/f/{source}/{target}", this::handleFindWords);
     }
 
     private void handleRoot(ServerRequest req, ServerResponse res) {
@@ -252,11 +255,57 @@ public class DictionaryWebApi {
             // 3. Handle missing word with empty JSON instead of plain text
             res.status(404)
                .header(io.helidon.http.HeaderNames.CONTENT_TYPE, "application/json")
-               .send("EMPTY_JSON");
+                .send(EMPTY_JSON);
             StatisticsManager.afterWordNotFound(dict, wordText);
         }
     }
-    
+
+    /**
+     * Handles batch lookup requests.
+     * Expects a JSON array of strings in the request body.
+     * TODO: Рознести по маленьким методам.
+     */
+    private void handleFindWords(ServerRequest req, ServerResponse res) {
+        final String EMPTY_ARRAY = "[]";
+        var params = req.path().pathParameters();
+        String source = params.get("source");
+        String target = params.get("target");
+
+        try {
+            String rawJson = req.content().as(String.class);
+
+            // 2. Парсимо рядок у JSONArray і перетворюємо в List<String>
+            JSONArray jsonArray = new JSONArray(rawJson);
+            List<String> words = new ArrayList<>();
+            for (int i = 0; i < jsonArray.length(); i++) {
+                words.add(jsonArray.getString(i));
+            }
+
+            // 3. Optional-ланцюжок для пошуку словника
+            Optional<Dictionary> dictOpt = manager.getBaseLanguage(source)
+                .flatMap(base -> base.getDictionary(target));
+
+            if (dictOpt.isEmpty()) {
+                res.status(io.helidon.http.Status.NOT_FOUND_404)
+                    .header(io.helidon.http.HeaderNames.CONTENT_TYPE, "application/json")
+                    .send(EMPTY_ARRAY);
+                return;
+            }
+
+            // 4. Шукаємо слова та відправляємо результат як валідний JSON
+            Dictionary dict = dictOpt.get();
+            List<String> found = dict.find(words);
+            
+            res.status(io.helidon.http.Status.OK_200)
+                .header(io.helidon.http.HeaderNames.CONTENT_TYPE, "application/json")
+                .send(new JSONArray(found).toString());
+
+        } catch (Exception e) {
+            res.status(io.helidon.http.Status.BAD_REQUEST_400)
+                .send("Invalid JSON array: " + e.getMessage());
+        }
+    }
+
     public void start() {
         try {
             manager.init(this.dictPath);
