@@ -11,7 +11,7 @@ JAR_FILE  := target/$(APP_NAME)-$(VERSION).jar
 MVN       := ./mvnw
 MVN_VER   := 3.9.6
 PORT      ?= 8080
-DICT_DIR  ?= ./my-dict
+DICT_DIR  ?= ./dicts
 
 .PHONY: help
 help:
@@ -40,7 +40,7 @@ run: $(JAR_FILE)
 import-org: $(JAR_FILE)
 	@java -jar $(JAR_FILE) import-org $(INPUT) $(OUTPUT)
 
-#make create-dict DICTDIR=my-dict SRC=en TARGET=es
+#make create-dict DICTDIR=dicts SRC=en TARGET=es
 create-dict: $(JAR_FILE)
 	@java -jar $(JAR_FILE) create-dict $(DICTDIR) $(SRC) $(TARGET)
 
@@ -51,11 +51,11 @@ create-dict: $(JAR_FILE)
 create-dict-args: $(JAR_FILE)
 	@java -jar $(JAR_FILE) create-dict $(ARGS)
 
-#make list-dicts DICTDIR=my-dict
+#make list-dicts DICTDIR=dicts
 list-dicts: $(JAR_FILE)
 	@java -jar $(JAR_FILE) list-dicts $(DICTDIR) $(SRC)
 
-#make list-dicts-args ARGS="my-dict -s en"
+#make list-dicts-args ARGS="dicts -s en"
 list-dicts-args: $(JAR_FILE)
 	@java -jar $(JAR_FILE) list-dicts $(ARGS)
 
@@ -68,7 +68,7 @@ remove-word: $(JAR_FILE)
 run-api: $(JAR_FILE)
 	@java -jar $(JAR_FILE) run-api --port $(PORT) --dicts $(DICT_DIR)
 
-# make run-api-args ARGS="-p 8080 -d ./my-dict"
+# make run-api-args ARGS="-p 8080 -d ./dicts"
 run-api-args: $(JAR_FILE)
 	@java -jar $(JAR_FILE) run-api $(ARGS)
 
