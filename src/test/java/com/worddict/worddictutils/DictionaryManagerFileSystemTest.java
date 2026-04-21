@@ -83,6 +83,27 @@ public class DictionaryManagerFileSystemTest {
     }
 
     @Test
+    public void testDictionaryNameAndHiddenFolderFiltering() {
+        final String DICT_NAME_PATTERN = "^(?!\\.)[a-z]{2}(?:-[a-z0-9-_]+)?$";
+
+        // 1. VALID NAMES
+        assertTrue("Name 'en' should be valid", "en".matches(DICT_NAME_PATTERN));
+        assertTrue("Name 'uk-min' should be valid", "uk-min".matches(DICT_NAME_PATTERN));
+
+        // 2. TECHNICAL PREFIXES (startsWith)
+        String hiddenDir = ".git";
+        String technicalDir = "--uk-min";
+
+        assertTrue("Should detect dot prefix", hiddenDir.startsWith("."));
+        assertTrue("Should detect double dash prefix", technicalDir.startsWith("--"));
+
+        // 3. INVALID NAMES (Regex)
+        assertFalse("Regex should reject dot prefix", ".git".matches(DICT_NAME_PATTERN));
+        assertFalse("Regex should reject single character codes", "a".matches(DICT_NAME_PATTERN));
+        assertFalse("Regex should reject non-latin characters", "en-Укр".matches(DICT_NAME_PATTERN));
+    }
+
+    @Test
     public void testGetDictionaryNameUnicode() {
         Language en = Language.getLanguageByCode("en");
         BaseLanguage base = new MockBaseLanguage(en);

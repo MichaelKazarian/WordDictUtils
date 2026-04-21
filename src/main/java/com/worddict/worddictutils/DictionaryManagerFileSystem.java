@@ -62,15 +62,23 @@ public enum DictionaryManagerFileSystem implements DictionaryManager {
     }
 
     /**
-     * Сканує кореневу директорію на наявність піддиректорій,
-     * які вважаються мовними кодами, і завантажує їх як BaseLanguage.
-     * @param rootPath Кореневий шлях словника.
-     * @throws IOException Якщо не вдається просканувати директорії.
+     * Scans the root directory for subdirectories representing language codes
+     * and loads them as BaseLanguage instances.
+     *
+     * Note: Hidden directories starting with '.' (e.g., .git) and
+     * technical directories starting with '--' are ignored.
+     *
+     * @param rootPath The root dictionary path.
+     * @throws IOException If scanning the directory fails.
      */
     private void loadBaseLanguages(Path rootPath) throws IOException {
         try (Stream<Path> subdirectories = Files.list(rootPath)) {
             subdirectories
                 .filter(Files::isDirectory)
+                .filter(p -> {
+                        String name = p.getFileName().toString();
+                        return !name.startsWith(".") && !name.startsWith("--");
+                    })
                 .forEach(langDir -> {
                         String langCode = langDir.getFileName().toString().toLowerCase(Locale.ROOT);
                         try {
@@ -80,7 +88,6 @@ public enum DictionaryManagerFileSystem implements DictionaryManager {
                             // System.out.println("Discovered and registered language: " + langCode);
 
                         } catch (Exception e) {
-                            // Обробка помилок при створенні Language або BaseLanguage
                             System.err.println("Skipping language directory " + langCode +
                                                " due to error during registration: " + e.getMessage());
                         }
