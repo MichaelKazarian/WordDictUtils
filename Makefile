@@ -11,7 +11,7 @@ JAR_FILE  := target/$(APP_NAME)-$(VERSION).jar
 MVN       := ./mvnw
 MVN_VER   := 3.9.6
 PORT      ?= 8080
-DICT_DIR  ?= ./dicts
+DICT_DIR  ?= ../wd-dicts
 
 .PHONY: help
 help:
